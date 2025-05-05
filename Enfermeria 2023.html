@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Examen ENFERMERIA 2023 - Interactivo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Estilos base adaptados */
+    :root {
+      --primary-color: #003366; /* Azul oscuro original */
+      --accent-color: #FFCC00;  /* Amarillo original */
+      --text-color: #333;
+      --correct-bg: #d4edda;
+      --correct-border: #c3e6cb;
+      --correct-text: #155724;
+      --incorrect-bg: #f8d7da;
+      --incorrect-border: #f5c6cb;
+      --incorrect-text: #721c24;
+      --correct-highlight-border: #28a745; /* Verde fuerte para borde correcto */
+      --explanation-bg: #e9ecef; /* Fondo gris claro para explicación */
+      --explanation-border: #ced4da;
+      --explanation-text: #495057;
+      --button-primary-bg: #003366;
+      --button-primary-hover: #002244;
+      --button-secondary-bg: #6c757d;
+      --button-secondary-hover: #5a6268;
+      --button-restart-bg: #28a745; /* Verde para reiniciar */
+      --button-restart-hover: #218838;
+      --button-review-bg: #ffc107; /* Amarillo/Naranja para revisar */
+      --button-review-hover: #e0a800;
+      --fixed-counter-height: 45px; /* Estimación altura contador + borde */
+      --mobile-fixed-counter-height: 40px; /* Estimación altura contador móvil */
+      --question-bg: #ffffff; /* Fondo para cada pregunta */
+      --question-border: #e0e0e0; /* Borde para cada pregunta */
+      --question-shadow: 0 2px 5px rgba(0,0,0,0.08); /* Sombra suave */
+    }
+    html, body {
+        height: 100%;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0; /* Padding gestionado por JS/clase */
+      background: #f0f4f8; /* Fondo general ligeramente gris */
+      color: var(--text-color);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    /* Padding superior cuando el examen está activo */
+    body.exam-active {
+        padding-top: var(--fixed-counter-height);
+        justify-content: flex-start; /* Alinear contenido arriba */
+    }
+
+
+    /* --- Start Screen Styles --- */
+    #startScreen {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 30px;
+        text-align: center;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin: 20px auto;
+        max-width: 500px;
+        width: 90%;
+    }
+    #startScreen h2 { color: var(--primary-color); margin-bottom: 20px; }
+    .question-options label { display: block; margin: 10px 0; font-size: 1.1em; cursor: pointer; background-color: transparent; padding: 5px; border: none; border-radius: 0; position: static; text-align: left; }
+    .question-options label:hover { background-color: transparent; border-color: transparent; }
+    .question-options input[type="radio"] { margin-right: 8px; vertical-align: middle; }
+    .start-buttons button { background: var(--button-primary-bg); color: #fff; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; margin: 15px 5px 5px 5px; font-size: 1.1em; transition: background-color 0.2s ease; }
+    .start-buttons button:hover { background-color: var(--button-primary-hover); }
+    .start-buttons button#resumeButton { background-color: var(--button-secondary-bg); }
+    .start-buttons button#resumeButton:hover { background-color: var(--button-secondary-hover); }
+    #resumePrompt { margin-top: 15px; padding: 10px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; color: #856404; font-size: 0.9em; }
+
+
+    /* --- Exam View Styles --- */
+    header {
+      background: var(--primary-color);
+      color: #fff;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    header h1 { margin: 5px 0; font-size: 1.5em; }
+
+    /* Contador fijo */
+    #contador-fijo {
+        background-color: var(--accent-color);
+        color: var(--primary-color);
+        padding: 8px 20px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1em;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 900;
+        border-bottom: 2px solid var(--primary-color);
+        box-sizing: border-box;
+    }
+    #contador-fijo span, #contador-fijo a { margin: 0 8px; }
+    .contador-aciertos { color: green; }
+    .contador-fallos { color: red; }
+    #pendingLink { cursor: pointer; text-decoration: none; color: inherit; }
+    #pendingLink:hover { text-decoration: underline; }
+    #pendingLink.disabled { cursor: default; opacity: 0.5; pointer-events: none; }
+
+
+    .quiz-container {
+      margin: 20px auto;
+      max-width: 700px;
+      padding: 0;
+      border-radius: 8px;
+    }
+
+    /* Contenedor de las preguntas */
+    #exam {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Estilo individual de cada pregunta */
+    .question {
+      background: var(--question-bg);
+      border: 1px solid var(--question-border);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 25px;
+      transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      outline: 0px solid transparent;
+      box-shadow: var(--question-shadow);
+    }
+    .question:last-child {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--question-border);
+    }
+    .question p {
+        margin: 0 0 18px;
+        font-size: 1.15em;
+        font-weight: bold;
+        color: var(--primary-color);
+        line-height: 1.4;
+    }
+    /* Línea separadora (añadida con JS) */
+    .question hr {
+        border: none;
+        height: 1px;
+        background-color: #dee2e6;
+        margin-top: 25px;
+        margin-bottom: -20px;
+    }
+
+
+    /* Estilos específicos para labels dentro de las preguntas */
+    .question form label {
+        display: block;
+        margin-bottom: 10px;
+        cursor: pointer;
+        background-color: #f9f9f9;
+        padding: 12px 18px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+        position: relative;
+        text-align: left;
+    }
+    .question form label:hover:not(.disabled) { background-color: #eef; border-color: #aab; }
+    .question form label.disabled { cursor: default; opacity: 0.7; }
+    .question form input[type="radio"] { margin-right: 12px; vertical-align: middle; }
+    .question form label.respuesta-correcta { background-color: var(--correct-bg); border-color: var(--correct-border); color: var(--correct-text); font-weight: bold; }
+    .question form label.respuesta-incorrecta { background-color: var(--incorrect-bg); border-color: var(--incorrect-border); color: var(--incorrect-text); }
+    .question form label.es-correcta-destacada { border: 2px solid var(--correct-highlight-border) !important; font-weight: bold; }
+
+    /* Feedback (Correcto/Incorrecto) */
+    .feedback { margin-top: 15px; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.95em; display: none; }
+    .feedback.correct { color: var(--correct-text); background-color: var(--correct-bg); border: 1px solid var(--correct-border); display: block; }
+    .feedback.incorrect { color: var(--incorrect-text); background-color: var(--incorrect-bg); border: 1px solid var(--incorrect-border); display: block; }
+
+    /* Estilo para la explicación */
+    .explanation-text {
+      margin-top: 10px; /* Espacio sobre la explicación */
+      padding: 12px;
+      border-radius: 4px;
+      background-color: var(--explanation-bg);
+      border: 1px solid var(--explanation-border);
+      color: var(--explanation-text);
+      font-size: 0.9em;
+      line-height: 1.5;
+      display: none; /* Oculto por defecto */
+    }
+
+    .comprobar-btn { display: none !important; }
+
+    /* Modal de Resultados */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+    .modal-content { background-color: #fff; margin: 10% auto; padding: 30px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .modal-content h2 { color: var(--primary-color); margin-top: 0; margin-bottom: 25px; }
+    .modal-content #results-text { font-size: 1.8em; margin: 25px 0; line-height: 1.4; }
+    .modal-content #results-text strong { display: inline-block; margin: 0 5px; }
+    .modal-content button { color: white; padding: 12px 22px; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; margin: 10px 5px 0 5px; transition: background-color 0.3s ease; min-width: 140px; }
+    .modal-content button:hover { opacity: 0.9; }
+    .modal-content button#reiniciar-btn { background-color: var(--button-restart-bg); }
+    .modal-content button#reiniciar-btn:hover { background-color: var(--button-restart-hover); }
+    .modal-content button#revisar-btn { background-color: var(--button-review-bg); color: #333; }
+    .modal-content button#revisar-btn:hover { background-color: var(--button-review-hover); }
+
+    /* Estilos modo revisión */
+    .modo-revision .feedback,
+    .modo-revision .explanation-text { /* Oculta feedback y explicación en modo revisión */
+        display: none !important;
+    }
+    .modo-revision .question form label.respuesta-seleccionada::before { content: '▶'; position: absolute; left: -15px; top: 50%; transform: translateY(-50%); color: var(--primary-color); font-size: 0.8em; }
+    .modo-revision .question form label.es-correcta-revision { font-weight: bold; border: 2px solid var(--button-restart-bg); }
+    .modo-revision .question form label.respuesta-correcta { background-color: var(--correct-bg); border-color: var(--correct-border); color: var(--correct-text); }
+    .modo-revision .question form label.respuesta-incorrecta { background-color: var(--incorrect-bg); border-color: var(--incorrect-border); color: var(--incorrect-text); }
+    .modo-revision .question form input[type="radio"] { display: none; }
+
+     /* Utility class to hide elements */
+    .hidden {
+        display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      /* Padding superior para móvil cuando el examen está activo */
+       body.exam-active {
+           padding-top: var(--mobile-fixed-counter-height);
+       }
+      header h1 { font-size: 1.3em; }
+      #contador-fijo { font-size: 0.9em; padding: 6px 10px; }
+      #contador-fijo span, #contador-fijo a { margin: 0 5px;}
+
+      #startScreen { padding: 20px; margin-top: 20px; margin-bottom: 20px; }
+       .question-options label { font-size: 1em; }
+       .start-buttons button { width: calc(100% - 10px); margin: 8px 5px; font-size: 1em; padding: 10px 20px;}
+
+      .quiz-container { margin: 10px auto; }
+      #exam { padding: 15px; } /* Padding en móvil */
+      .question { margin-bottom: 20px; padding: 15px; } /* Padding y margen en móvil */
+      .question p { font-size: 1.05em; }
+      .question form label { padding: 10px 15px; font-size: 0.95em;}
+      .question hr { margin-top: 20px; margin-bottom: -15px; } /* Ajuste separador móvil */
+
+      /* Estilo explicación en móvil */
+      .explanation-text { font-size: 0.85em; padding: 10px; }
+
+      .modal-content { padding: 20px; }
+      .modal-content #results-text { font-size: 1.5em; }
+      .modal-content button { padding: 10px 18px; font-size: 0.9em; margin: 5px; display: block; width: calc(100% - 10px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="startScreen">
+      <h2>Configurar Examen - ENFERMERIA SAS</h2>
+      <div id="resumePrompt" class="hidden">
+          <p>Se encontró progreso guardado.</p>
+      </div>
+      <div class="question-options">
+          <p><strong>Número de preguntas:</strong></p>
+          <label><input type="radio" name="numQuestions" value="30" checked> 30 Preguntas</label>
+          <label><input type="radio" name="numQuestions" value="50"> 50 Preguntas</label>
+          <label><input type="radio" name="numQuestions" value="70"> 70 Preguntas</label>
+          <label><input type="radio" name="numQuestions" value="all"> Todas (<span id="totalParsedCount">0</span>)</label>
+      </div>
+      <div class="start-buttons">
+          <button id="startButton">Empezar Nuevo Examen</button>
+          <button id="resumeButton" class="hidden">Continuar Examen Anterior</button>
+      </div>
+  </div>
+
+  <header class="hidden">
+    <h1>ENFERMERIA SAS</h1>
+  </header>
+
+  <div id="contador-fijo" class="hidden">
+    <span>Aciertos: <span id="contador-aciertos" class="contador-aciertos">0</span></span> |
+    <span>Fallos: <span id="contador-fallos" class="contador-fallos">0</span></span> |
+    <span>Respondidas: <span id="contador-respondidas">0</span> / <span id="contador-total-activo">0</span></span> |
+    <a href="#" id="pendingLink" title="Ir a la siguiente pregunta pendiente">
+        Pendientes: <span id="contador-pendientes">0</span>
+    </a>
+  </div>
+
+  <div class="quiz-container hidden">
+    <div id="exam">
+      </div>
+  </div>
+
+  <div id="results-modal" class="modal">
+    <div class="modal-content">
+      <h2>Resultados del Test</h2>
+      <p id="results-text"></p>
+      <button id="reiniciar-btn">Empezar de nuevo</button>
+      <button id="revisar-btn">Revisar Test</button>
+    </div>
+  </div>
+
+
+  <script>
+    // --- Constantes y Variables Globales ---
+    const examDiv = document.getElementById("exam");
+    const quizContainer = document.querySelector(".quiz-container");
+    const resultsModal = document.getElementById('results-modal');
+    const resultsText = document.getElementById('results-text');
+    const reiniciarBtn = document.getElementById('reiniciar-btn');
+    const revisarBtn = document.getElementById('revisar-btn');
+    const startScreen = document.getElementById('startScreen');
+    const startButton = document.getElementById('startButton');
+    const resumeButton = document.getElementById('resumeButton');
+    const resumePrompt = document.getElementById('resumePrompt');
+    const examHeader = document.querySelector('header');
+    const contadorFijoDiv = document.getElementById('contador-fijo');
+    const totalParsedCountSpan = document.getElementById('totalParsedCount');
+
+    // --- Elementos del contador fijo ---
+    const contadorAciertosSpan = document.getElementById('contador-aciertos');
+    const contadorFallosSpan = document.getElementById('contador-fallos');
+    const contadorRespondidasSpan = document.getElementById('contador-respondidas');
+    const contadorTotalActivoSpan = document.getElementById('contador-total-activo'); // Span para total activo
+    const contadorPendientesSpan = document.getElementById("contador-pendientes");
+    const pendingLink = document.getElementById('pendingLink');
+
+    const progressKey = 'examProgressMurciaB'; // Clave única para este examen
+
+    let correctAnswersCount = 0;
+    let incorrectAnswersCount = 0;
+    let answeredQuestionsCount = 0;
+    let allParsedQuestions = []; // Todas las preguntas parseadas
+    let activeQuestions = [];    // Preguntas de la sesión actual
+    let totalActiveQuestions = 0; // Total de preguntas en la sesión actual
+    let userSelections = {}; // Para modo revisión
+    let explanationsMap = new Map(); // *** NUEVO: Mapa para guardar explicaciones ***
+
+    // *** NUEVO: Aquí pegarías TODAS tus explicaciones en el formato "número: explicación" ***
+    const userExplanationsText = `
+    1: "<strong>Explicación:</strong> El artículo 50 de la Constitución Española establece que los poderes públicos garantizarán, mediante pensiones adecuadas y periódicamente actualizadas, la suficiencia económica a los ciudadanos durante la tercera edad. Los otros artículos tratan sobre consumidores (51), derechos fundamentales (53) o no existen en ese contexto (52).",
+2: "<strong>Explicación:</strong> El Estatuto de Autonomía para Andalucía (Ley Orgánica 2/2007) menciona explícitamente al Defensor del Pueblo Andaluz, al Consejo Consultivo, a la Cámara de Cuentas, al Consejo Audiovisual y al Consejo Económico y Social como otras instituciones de autogobierno. El Consejo de Transparencia, la Cámara de Comercio y el Consejo de RTVA no forman parte de la estructura organizativa de la Junta según el Estatuto en el mismo nivel que las anteriores.",
+3: "<strong>Explicación:</strong> El Reglamento (UE) 2016/679, conocido como Reglamento General de Protección de Datos (RGPD), es la normativa principal y de aplicación directa en todos los estados miembros de la UE sobre protección de datos personales. Derogó la Directiva 95/46/CE. El Tratado de Lisboa y la Carta de Derechos Fundamentales establecen principios generales, pero el RGPD es la ley específica.",
+4: "<strong>Explicación:</strong> Todas las opciones son medidas de prevención de pinchazos excepto la A. Desechar pipetas rotas es una medida de seguridad general de laboratorio, pero no está directamente relacionada con la prevención de pinchazos accidentales con agujas u objetos cortopunzantes contaminados, que es el foco principal de las otras medidas (no reencapsular, no manipular contenedores, usar guantes).",
+5: "<strong>Explicación:</strong> El artículo 10 de la Ley 55/2003 (Estatuto Marco) designa al Consejo Interterritorial del Sistema Nacional de Salud como el órgano principal de coordinación entre el Estado y las Comunidades Autónomas en materia sanitaria, incluyendo la política de recursos humanos.",
+6: "<strong>Explicación:</strong> Si bien es necesario registrarse en la BDU, acreditar residencia y presentar la solicitud, NO es imprescindible elegir médico o centro en el momento exacto de solicitar la tarjeta por primera vez. La asignación o elección se puede realizar posteriormente o puede ser asignado de oficio inicialmente.",
+7: "<strong>Explicación:</strong> La definición corresponde a una Guía de Práctica Clínica (GPC). Las GPC se basan en la mejor evidencia científica disponible. Una vía clínica es una herramienta para estandarizar la atención a un proceso concreto, un protocolo es más específico para una actuación, y un procedimiento normalizado de trabajo (PNT) detalla cómo realizar una tarea específica.",
+8: "<strong>Explicación:</strong> La característica distintiva de los grupos focales es precisamente la interacción entre los participantes, ya que se busca explorar cómo se construyen significados y opiniones a través de la discusión grupal, moderada por un facilitador. La opción D niega esta característica fundamental.",
+9: "<strong>Explicación:</strong> El Decreto 96/2004 establece garantías de plazos máximos de respuesta. Para las primeras consultas de asistencia especializada procedentes de atención primaria, el plazo máximo garantizado es de 60 días naturales.",
+10: "<strong>Explicación:</strong> El Valor Predictivo Positivo (VPP) indica la probabilidad de que un individuo con un resultado positivo en la prueba realmente tenga la enfermedad. Se calcula dividiendo el número de Verdaderos Positivos (VP) entre el total de resultados positivos (Verdaderos Positivos + Falsos Positivos): VPP = VP / (VP + FP).",
+11: "<strong>Explicación:</strong> La mortalidad infantil, según la definición estándar utilizada por organismos como el INE y la OMS, se refiere a las defunciones de niños ocurridas antes de cumplir el primer año de vida (es decir, durante los primeros 12 meses).",
+12: "<strong>Explicación:</strong> Las medidas de tendencia central describen el valor central o típico de un conjunto de datos. La Media (promedio), la Mediana (valor central ordenado) y la Moda (valor más frecuente) son medidas de tendencia central. La Varianza es una medida de dispersión, que indica cuánto se alejan los datos de la media.",
+13: "<strong>Explicación:</strong> La Agencia de Calidad Sanitaria de Andalucía (ACSA) establece niveles de certificación. Para alcanzar el nivel Excelente, se requiere cumplir con el 100% de las evidencias del Grupo II y el 80% de las evidencias del Grupo III, además de los requisitos de los niveles inferiores (que incluyen las esenciales del Grupo I).",
+14: "<strong>Explicación:</strong> La Tarjeta +Cuidado es una iniciativa enmarcada dentro de la Estrategia de Cuidados de Andalucía (PiCuida), orientada a mejorar la atención a personas con gran dependencia o demencias y a sus cuidadores.",
+15: "<strong>Explicación:</strong> En los Procesos Asistenciales Integrados (PAI), los límites definen el alcance del proceso. El límite final se refiere a aquellas condiciones o situaciones que, aunque relacionadas, no serán abordadas en detalle dentro de ese PAI específico (por ejemplo, complicaciones muy avanzadas que requieren otro PAI). El límite marginal se refiere a las características que marcan el fin de la secuencia descrita.",
+16: "<strong>Explicación:</strong> La Eficacia se refiere al resultado de una intervención en condiciones ideales o experimentales (ensayos clínicos). La Efectividad mide el resultado en condiciones reales de práctica clínica habitual. La Eficiencia relaciona los resultados obtenidos con los recursos utilizados.",
+17: "<strong>Explicación:</strong> El Plan de Calidad del SSPA se estructura en torno a escenarios clave: Ciudadanía, Profesionales y Espacio Compartido (la organización y el sistema). La Gestión Clínica es un modelo de organización y funcionamiento, pero no uno de los escenarios principales del Plan de Calidad como tal.",
+18: "<strong>Explicación:</strong> Los estudios descriptivos buscan describir características de una población o fenómeno. Incluyen estudios de casos clínicos (un paciente), series de casos (varios pacientes) y estudios transversales (miden exposición y enfermedad en un punto del tiempo). Los estudios de cohortes, casos y controles, experimentales y cuasi-experimentales son estudios analíticos, que buscan relaciones causa-efecto.",
+19: "<strong>Explicación:</strong> El Test de Allen se realiza antes de una punción arterial (generalmente en la arteria radial) para evaluar la permeabilidad de la arteria cubital y asegurar que existe una circulación colateral adecuada en la mano. Esto previene la isquemia si la arteria radial se obstruyera.",
+20: "<strong>Explicación:</strong> Entre los 0 y 3 meses, los hitos auditivos y de lenguaje incluyen sobresaltarse con ruidos fuertes, calmarse con la voz familiar, empezar a emitir sonidos guturales (gorjeos) y mostrar interés por sonidos, incluyendo juguetes musicales. Disfrutar con juguetes musicales es un hito esperado en esta etapa.",
+21: "<strong>Explicación:</strong> La relación terapéutica enfermera-paciente tiene múltiples objetivos, todos ellos encaminados a facilitar el bienestar y la autonomía del paciente. Ayudar a comprender el problema, a ser agente de cambio y a expresar ideas/sentimientos son componentes clave de esta relación.",
+22: "<strong>Explicación:</strong> El Modelo PRECEDE-PROCEED (la parte PRECEDE) es el que propone analizar los factores Predisponentes (conocimientos, actitudes, creencias), Facilitadores (habilidades, recursos, barreras) y Reforzantes (apoyo social, recompensas) que influyen en una conducta de salud para planificar intervenciones educativas.",
+23: "<strong>Explicación:</strong> La definición proporcionada corresponde a la Eutanasia, según se describe en documentos sobre ética al final de la vida. La Limitación del Esfuerzo Terapéutico (LET) implica no iniciar o retirar tratamientos considerados fútiles o desproporcionados porque no ofrecen beneficio real al paciente en situación terminal o irreversible, permitiendo la evolución natural de la enfermedad.",
+24: "<strong>Explicación:</strong> Las Enfermeras de Práctica Avanzada (EPA) en Heridas Crónicas Complejas (HCC) en Andalucía actúan como consultoras y referentes. Cualquier profesional puede solicitar su asesoría. Atienden heridas complejas, incluyendo las de baja prevalencia, y los pacientes no piden cita directamente, sino que son derivados o consultados por otros profesionales.",
+25: "<strong>Explicación:</strong> La intervención avanzada en tabaquismo en Andalucía se ofrece tanto individual como grupal. Existen Unidades de Apoyo especializadas para casos más complejos. El seguimiento se realiza hasta los 12 meses. El test de Richmond valora la motivación para dejar de fumar, mientras que el test de Fagerström mide la dependencia física a la nicotina.",
+26: "<strong>Explicación:</strong> Según la teoría del desarrollo cognitivo de Jean Piaget, el razonamiento abstracto, la capacidad de pensar sobre conceptos hipotéticos y deducir consecuencias, emerge en la etapa de las Operaciones Formales, que generalmente comienza en la adolescencia (a partir de los 11-12 años aproximadamente).",
+27: "<strong>Explicación:</strong> El servicio de Atención Domiciliaria está dirigido a personas con dependencia o inmovilidad y a sus cuidadores. Si un cuidador primario identificado explícitamente rechaza participar o recibir apoyo del servicio, esto constituye un criterio de exclusión para él/ella, aunque el paciente siga recibiendo atención.",
+28: "<strong>Explicación:</strong> El Plan de Acción Personalizado (PAP) es una herramienta colaborativa entre profesional y paciente (y/o cuidador) para pactar objetivos y acciones de autocuidado. No se limita solo a pacientes crónicos complejos priorizados, sino que puede usarse en diversas situaciones de cronicidad para fomentar la autogestión.",
+29: "<strong>Explicación:</strong> La Escala INTERMED es una herramienta validada que evalúa la complejidad biopsicosocial de los pacientes (considerando aspectos biológicos, psicológicos, sociales y del sistema sanitario) para facilitar una planificación asistencial integral y multidisciplinar, especialmente útil en pacientes hospitalizados o con necesidades complejas.",
+31: &lt;strong>Explicación:&lt;/strong> Los criterios de fragilidad en Atención Primaria suelen combinar la funcionalidad (Índice de Barthel > 90 indica independencia básica), el rendimiento físico (Test SPPB &lt; 10 indica bajo rendimiento) y el riesgo de caídas. La opción D combina estos elementos correctamente según las guías habituales de cribado.
+32: &lt;strong>Explicación:&lt;/strong> El Plan Integral de Atención a la Accidentabilidad de Andalucía tiene como uno de sus objetivos principales reducir la mortalidad evitable causada por accidentes, además de reducir la incidencia y mejorar la calidad de vida de los afectados.
+33: &lt;strong>Explicación:&lt;/strong> La Escala Duke-UNC valora específicamente el apoyo social percibido por la persona, es decir, cómo siente el individuo el apoyo que recibe de su red social. El Apgar familiar mide la función familiar, el Índice de esfuerzo mide la carga objetiva y Zarit la sobrecarga subjetiva del cuidador.
+34: &lt;strong>Explicación:&lt;/strong> El sistema de seguimiento telemático de paliativos (a menudo integrado en Diraya o sistemas similares) recoge información clave sobre el paciente (datos demográficos, diagnóstico), su situación (grupo patológico, nivel de complejidad), el plan terapéutico (tratamiento, solicitudes, actividades) y los cuidadores principales. No suele incluir detalles exhaustivos del entorno social o la organización sanitaria específica en su núcleo de datos básicos.
+35: &lt;strong>Explicación:&lt;/strong> Las etapas clásicas y universalmente aceptadas del Proceso Enfermero son: Valoración (recogida de datos), Diagnóstico (identificación de problemas/necesidades), Planificación (establecimiento de objetivos e intervenciones), Ejecución (realización de las intervenciones) y Evaluación (valoración de los resultados).
+36: &lt;strong>Explicación:&lt;/strong> Una reacción adversa a medicamentos (RAM) es una respuesta nociva y no intencionada. La edad (infancia, vejez) y patologías (renal, hepática) son factores de riesgo. La seguridad de los medicamentos es una responsabilidad compartida entre laboratorios, agencias reguladoras, profesionales sanitarios y pacientes (farmacovigilancia). No recae únicamente en laboratorios y agencias.
+37: &lt;strong>Explicación:&lt;/strong> El Ciclo de la Violencia descrito por Leonore Walker consta de tres fases características que se repiten: 1) Acumulación de tensión, 2) Explosión violenta o agresión aguda, y 3) Luna de miel o reconciliación (con arrepentimiento y promesas de cambio).
+38: &lt;strong>Explicación:&lt;/strong> La escala de Maddox para valorar la flebitis gradúa la severidad. Un Grado 3 se caracteriza por dolor, eritema, edema, endurecimiento y un cordón venoso palpable. El Grado 2 presenta dolor con eritema y/o edema, pero sin cordón palpable. Grados superiores implican mayor extensión o complicaciones como supuración.
+39: &lt;strong>Explicación:&lt;/strong> En la atención al trauma grave, la preoxigenación es crucial. Si fallan los intentos de intubación, se usan alternativas (dispositivos supraglóticos). La secuencia rápida de intubación (SRI) SÍ está indicada por el riesgo de aspiración. Sin embargo, las guías suelen recomendar considerar métodos alternativos tras 2-3 intentos fallidos, no necesariamente esperar a cuatro. (Nota: La respuesta correcta marcada en el original es D, pero la justificación sobre el número de intentos podría variar ligeramente según la guía específica; la SRI sí es la técnica indicada).
+40: &lt;strong>Explicación:&lt;/strong> La atrofia urogenital (sequedad vaginal, dispareunia, síntomas urinarios bajos) es un síntoma directamente relacionado con el descenso de estrógenos en la menopausia. Las infecciones urinarias pueden ser consecuencia de la atrofia, pero no son un síntoma directo primario. La HTA tiene múltiples causas y, aunque puede coincidir, no tiene una relación causal directa y exclusiva con la menopausia.
+41: &lt;strong>Explicación:&lt;/strong> Para la inserción de la sonda de lavado gástrico, el paciente suele colocarse sentado o semi-sentado si es posible. Una vez insertada, para realizar el lavado y minimizar el riesgo de aspiración, se coloca en decúbito lateral izquierdo y ligera posición de Trendelenburg. La opción A es incorrecta porque la posición sentada es para la inserción, no para el lavado en sí.
+42: &lt;strong>Explicación:&lt;/strong> Puntuación Escala Norton: Estado físico malo (1 pt), Estado mental apático (2 pts), Actividad deambula con ayuda (3 pts), Movilidad ligeramente limitada (3 pts), Incontinencia total (urinaria o fecal) (1 pt). Suma total = 1+2+3+3+1 = 10 puntos. Un puntaje bajo indica alto riesgo de UPP.
+43: &lt;strong>Explicación:&lt;/strong> El PAI de Diabetes Mellitus define como límite final aquellas situaciones que exceden el manejo habitual de la DM tipo 1 o 2 en AP/Hospitalización general, como son las formas específicas de diabetes (monogénicas, pancreáticas, endocrinas secundarias) o las complicaciones muy avanzadas que requieren unidades superespecializadas.
+44: &lt;strong>Explicación:&lt;/strong> El duelo agudo es la fase inicial tras la pérdida, caracterizada por una intensa respuesta emocional y cognitiva que puede incluir shock, negación, búsqueda de la persona fallecida, ira, culpa, tristeza profunda y llanto frecuente.
+45: &lt;strong>Explicación:&lt;/strong> La sedación paliativa busca aliviar sufrimiento intratable (síntomas refractarios). Requiere consentimiento informado registrado. Está indicada en pacientes en fase terminal o con enfermedad avanzada irreversible, no exclusivamente en tratamiento paliativo formal (aunque suele coincidir). La intención es clave: aliviar, no acelerar la muerte. El registro del consentimiento es fundamental.
+46: &lt;strong>Explicación:&lt;/strong> La hiponatremia se define por un nivel bajo de sodio en sangre. En deshidratación, si se pierde proporcionalmente más agua que sodio, se produce una deshidratación hipernatrémica. Si se pierde más sodio que agua (o se repone solo con agua), ocurre una deshidratación hiponatrémica. La opción B es incorrecta porque define la deshidratación hipernatrémica.
+47: &lt;strong>Explicación:&lt;/strong> La Atención Domiciliaria se dirige a personas que, por problemas de salud (inmovilidad, enfermedad terminal, convalecencia post-hospitalaria), no pueden desplazarse al centro de salud y requieren cuidados en su domicilio. Incluye a pacientes inmovilizados, paliativos y post-hospitalizados que cumplan criterios, así como a sus cuidadores si procede. La opción D engloba las situaciones más comunes.
+48: &lt;strong>Explicación:&lt;/strong> La valoración enfermera es la primera etapa del Proceso Enfermero. Es un proceso sistemático y continuo que incluye la recogida de datos (subjetivos y objetivos), su validación, organización y registro. Constituye la base fundamental para las siguientes etapas (diagnóstico, planificación, etc.).
+49: &lt;strong>Explicación:&lt;/strong> El Servicio Andaluz de Salud ha desarrollado varios perfiles de Enfermera de Práctica Avanzada (EPA), entre ellos: EPA en Heridas Crónicas Complejas, EPA en Diabetes (manejo de tratamientos complejos como bombas de insulina), EPA en Ostomías, EPA en Cuidados Paliativos, EPA en Diálisis, etc. Todas las mencionadas se han desarrollado o están en desarrollo.
+50: &lt;strong>Explicación:&lt;/strong> La Escala de Lawton y Brody evalúa las Actividades Instrumentales de la Vida Diaria (AIVD), como usar el teléfono, ir de compras, preparar comida, manejar dinero, etc. Karnofsky mide el estado funcional general (performance status), Norton el riesgo de UPP y Pfeiffer el deterioro cognitivo.
+51: &lt;strong>Explicación:&lt;/strong> La Ecuación de Harris-Benedict es una fórmula ampliamente utilizada para estimar el Metabolismo Basal (Tasa Metabólica Basal - TMB), es decir, la energía mínima que necesita el cuerpo en reposo. El IMC mide la relación peso/talla, MUST es un cribado de desnutrición y Garrow no es una fórmula estándar para el metabolismo basal.
+52: &lt;strong>Explicación:&lt;/strong> La Farmacodinamia es la rama de la farmacología que estudia lo que el fármaco le hace al organismo: sus efectos bioquímicos y fisiológicos y su mecanismo de acción. La Farmacocinética estudia lo que el organismo le hace al fármaco (absorción, distribución, metabolismo, excreción). La Farmacoterapia es el uso de fármacos para tratar enfermedades.
+53: &lt;strong>Explicación:&lt;/strong> Para adolescentes y adultos jóvenes que inician la vacunación contra el VPH tardíamente o necesitan completar pautas incomenzadas antes de los 15 años, la pauta recomendada suele ser de 3 dosis (0, 1-2 y 6 meses, según vacuna). Si inició con 1 dosis a los 12 años (cuando la pauta era de 2 dosis), y ahora tiene 17, se considera pauta incompleta y generalmente se recomienda completar con 2 dosis más siguiendo la pauta de 3 dosis (0, 1-2, 6 meses desde la dosis administrada ahora). Nota: La respuesta B (2 dosis separadas 4 meses) podría ser aplicable en algunos contextos si se considera rescate de pauta de 2 dosis, pero la pauta de 3 dosis es más estándar para >15 años. La respuesta marcada como correcta en el original (B) asume una pauta de rescate específica.
+54: &lt;strong>Explicación:&lt;/strong> Según la teoría psicosexual de Sigmund Freud, la Fase Fálica (aproximadamente entre los 3 y 6 años) es cuando se desarrolla el complejo de Edipo (en niños, atracción por la madre y rivalidad con el padre) y el complejo de Elektra (en niñas, atracción por el padre y rivalidad con la madre).
+55: &lt;strong>Explicación:&lt;/strong> Según el calendario de vacunación infantil de Andalucía (y la mayoría de CCAA en España), la vacuna conjugada frente a Haemophilus influenzae tipo b (Hib) se administra como parte de las vacunas combinadas (hexavalente o pentavalente) a los 2, 4 y 11 meses de edad.
+56: &lt;strong>Explicación:&lt;/strong> El Programa de Detección Precoz de Hipoacusia Neonatal Universal en Andalucía incluye un cribado a todos los recién nacidos, generalmente mediante Otoemisiones Acústicas (OEA). Si las OEA fallan o existen factores de riesgo, se realizan Potenciales Evocados Auditivos de Tronco Cerebral (PEATC) para confirmar el diagnóstico, idealmente antes de los 3 meses. La opción C es la más precisa al reflejar la estrategia combinada y la importancia de los PEATC ante factores de riesgo o fallo del cribado inicial.
+57: &lt;strong>Explicación:&lt;/strong> Se consideran situaciones de alto riesgo de transmisión vertical del VIH: carga viral materna detectable cerca del parto, ausencia de tratamiento antirretroviral (TAR) materno, parto prematuro, rotura prolongada de membranas, parto vaginal con alta carga viral, coinfecciones. La profilaxis antirretroviral al recién nacido es una medida de PREVENCIÓN, no una situación de alto riesgo en sí misma (se da precisamente porque existe riesgo).
+58: &lt;strong>Explicación:&lt;/strong> En el manejo inicial de una crisis comicial pediátrica, se prioriza asegurar vía aérea, administrar oxígeno y yugular la crisis con benzodiacepinas (diazepam rectal si no hay vía IV, o midazolam intranasal/bucal). Si no cede tras dos dosis de benzodiacepinas, se pasa a fármacos de segunda línea (fenitoína, levetiracetam, etc.). La afirmación A es correcta, ya que dosis repetidas de benzodiacepinas aumentan el riesgo de depresión respiratoria. La opción D indica el paso correcto a segunda línea. La opción C es la vía alternativa inicial. La B es una medida general correcta. La INCORRECTA es la D, ya que la Fenitoína es de segunda línea, no de elección inicial si las benzodiacepinas fallan. Corrección: La respuesta marcada como correcta en el original es A, lo cual es cierto (aumenta el riesgo), pero las otras también son pautas correctas. Podría haber una interpretación errónea en la pregunta o las opciones originales. Asumiendo que se busca la acción incorrecta, la D sría la más debatible como "incorrecta" si se interpreta como fármaco de primera elección tras fallo de BZD. Sin embargo, la A es una advertencia correcta. Revisando guías, el riesgo de depresión respiratoria es una consideración importante al usar BZD repetidas.
+59: &lt;strong>Explicación:&lt;/strong> Los criterios para activar el Código Ictus buscan identificar rápidamente a pacientes candidatos a terapias de reperfusión. Incluyen: inicio de síntomas &lt; 6 horas (o ventana extendida en casos seleccionados, ictus del despertar), ausencia de discapacidad previa significativa (Rankin ≤ 2) y presencia de focalidad neurológica aguda sugestiva de ictus. Todas las opciones son criterios habituales.
+60: &lt;strong>Explicación:&lt;/strong> Los PICC pueden ser de silicona o poliuretano (PUR). Los PUR son más rígidos, permiten paredes más finas y, por tanto, mayor luz interna (mayor flujo) a igual calibre externo; además, soportan mejor altas presiones (contrastes). Los de silicona son más blandos y biocompatibles, pero más frágiles a altas presiones y con menor luz interna para el mismo calibre externo. Por tanto, la afirmación B es incorrecta.
+61: &lt;strong>Explicación:&lt;/strong> El Índice Tobillo-Brazo (ITB) clasifica la Enfermedad Arterial Periférica (EAP). Un valor entre 0.91 y 1.30 es normal. Un valor entre 0.41 y 0.90 indica EAP leve a moderada. Un valor ≤ 0.40 indica EAP severa. Valores > 1.30 sugieren arterias calcificadas y no compresibles.
+62: &lt;strong>Explicación:&lt;/strong> Los Anticoagulantes Orales Directos (ACOD) en comprimidos (como Rivaroxabán, Apixabán, Edoxabán) generalmente pueden triturarse si es necesario, pero las cápsulas (Dabigatrán) NO deben abrirse, ya que esto altera su absorción. La recomendación para dosis olvidadas es correcta, y el almacenamiento de Dabigatrán en su envase original también. Por lo tanto, la opción C es incorrecta.
+63: &lt;strong>Explicación:&lt;/strong> La prevención terciaria se enfoca en personas que ya tienen una enfermedad establecida y busca reducir o retardar sus complicaciones y secuelas, mejorando la calidad de vida y la funcionalidad. La prevención primaria evita la aparición de la enfermedad y la secundaria la detecta precozmente.
+64: &lt;strong>Explicación:&lt;/strong> La escala FRAIL es un cuestionario corto de 5 ítems para detectar fragilidad en personas mayores. Cada ítem (Fatiga, Resistencia, Ambulación -caminar-, Illnesses -enfermedades-, Loss of weight -pérdida de peso-) puntúa 1 si está presente. Una puntuación de 1-2 sugiere pre-fragilidad y ≥3 sugiere fragilidad. La opción D es incorrecta porque no todas las opciones son correctas (la B describe los dominios, pero la A y C son afirmaciones sobre su uso y puntuación). La respuesta correcta marcada en el original es B, asumiendo que se pregunta por la descripción de los dominios.
+65: &lt;strong>Explicación:&lt;/strong> El vendaje en 8 (o figura de guarismo) es el método clásico para inmovilizar fracturas de clavícula, manteniendo los hombros hacia atrás y alineando los fragmentos óseos. El cabestrillo da soporte pero menos inmovilización. Desault es un vendaje más complejo para hombro/húmero.
+66: &lt;strong>Explicación:&lt;/strong> Según el PAI de Diabetes del SAS, el autoanálisis de glucemia capilar se recomienda de forma rutinaria en pacientes con DM2 principalmente si están en tratamiento con insulina o con fármacos secretagogos (sulfonilureas, glinidas) por el riesgo de hipoglucemia, o si presentan hipoglucemias frecuentes. No se recomienda de forma rutinaria en todos los pacientes con DM2 tratados solo con otros fármacos o dieta. La opción A es la indicación más clara y generalizada para el autoanálisis rutinario.
+67: &lt;strong>Explicación:&lt;/strong> El Cuestionario de Salud General de Goldberg (GHQ, en sus diferentes versiones) es una herramienta ampliamente utilizada para detectar malestar psicológico o riesgo de problemas de salud mental en población general y también en cuidadores. Zarit mide sobrecarga, Moretti no es una escala estándar en este contexto, Brass mide riesgo al alta.
+68: &lt;strong>Explicación:&lt;/strong> La definición proporcionada ("Actividad física planificada, estructurada y sistemática...") corresponde específicamente al término "Ejercicio físico". La actividad física es cualquier movimiento corporal, y el deporte implica competición y reglas.
+69: &lt;strong>Explicación:&lt;/strong> El Programa de Cribado Neonatal de Andalucía incluye actualmente enfermedades como hipotiroidismo congénito, fenilcetonuria, fibrosis quística, anemia falciforme, déficit de acil-CoA deshidrogenasa de cadena media (MCADD), acidemia glutárica tipo I (GA-I) y déficit de biotinidasa (que puede causar deficiencia múltiple de carboxilasa si no se trata). La Diabetes tipo 1 es una enfermedad autoinmune que no se incluye en el cribado neonatal estándar de metabolopatías. El CUD y MCD (vía déficit de biotinidasa) sí suelen estar contemplados.
+70: &lt;strong>Explicación:&lt;/strong> Para acceder a la financiación de sistemas de monitorización flash de glucosa (MFG) en DM2, se suelen requerir criterios clínicos (mal control, hipoglucemias frecuentes) y requisitos como adecuada educación diabetológica (del paciente o cuidador si es dependiente) y buena adherencia terapéutica demostrada, asegurando así el uso correcto y aprovechamiento del dispositivo. Todas las opciones son requisitos habituales.
+71: &lt;strong>Explicación:&lt;/strong> DIRAYA es el acrónimo del sistema de información corporativo del Servicio Andaluz de Salud (SAS) que integra la historia clínica electrónica, la gestión de citas, la prescripción electrónica (Receta XXI) y otros módulos de gestión sanitaria en Andalucía.
+72: &lt;strong>Explicación:&lt;/strong> El Índice de Barthel mide la capacidad para realizar 10 actividades básicas de la vida diaria (ABVD). Una puntuación de 100 indica independencia total en estas actividades, lo que se consideraría una persona mayor autónoma en términos de ABVD. Puntuaciones menores indican dependencia creciente.
+73: &lt;strong>Explicación:&lt;/strong> La Escala de Norton es una de las escalas más utilizadas y validadas para valorar el riesgo de desarrollar úlceras por presión (UPP) en pacientes, evaluando 5 parámetros (estado físico, estado mental, actividad, movilidad, incontinencia). Glasgow mide coma, Gijón valora la situación sociofamiliar y Dowton el riesgo de caídas.
+74: &lt;strong>Explicación:&lt;/strong> La ampolla tiene 5 mg/ml. Se extraen 2 ml, lo que equivale a 2 ml * 5 mg/ml = 10 mg de Midazolam. Estos 10 mg se diluyen en un volumen total de 2 ml (de la ampolla) + 8 ml (de suero) = 10 ml. La concentración final es de 10 mg / 10 ml = 1 mg/ml.
+75: &lt;strong>Explicación:&lt;/strong> La Teoría del Desarrollo Cognitivo fue propuesta por Jean Piaget, quien describió las etapas por las que pasa el pensamiento infantil hasta alcanzar el razonamiento abstracto adulto. Freud desarrolló la teoría psicosexual, y los otros autores no son referentes principales de esta teoría específica.
+76: &lt;strong>Explicación:&lt;/strong> Para aliviar el dolor de las vacunas en niños se usan varias técnicas ("tetanalgesia"): la succión no nutritiva (chupete), soluciones azucaradas (lactantes &lt; 6 meses), amamantamiento durante la inyección, distracción (juguetes, canciones en niños mayores), aplicación de frío local o anestésicos tópicos (aunque estos últimos requieren tiempo para actuar). La sujeción en brazos de la madre también ayuda a dar seguridad. Todas las opciones mencionadas (A, B, C) son estrategias válidas. Nota: La respuesta marcada como correcta en el original es B, quizás por ser la más eficaz en lactantes pequeños, pero D sería más completa.
+77: &lt;strong>Explicación:&lt;/strong> Los métodos anticonceptivos definitivos o permanentes son aquellos que buscan la esterilización irreversible. En el hombre es la Vasectomía y en la mujer la ligadura de trompas. Los otros métodos (implante, anillo, preservativo) son reversibles.
+78: &lt;strong>Explicación:&lt;/strong> Un Genograma es una representación gráfica, similar a un árbol genealógico, que recoge información sobre la estructura familiar, las relaciones entre sus miembros y datos médicos relevantes (enfermedades, causas de muerte) de al menos tres generaciones. Es una herramienta útil en medicina familiar y enfermería. Nota: Esta pregunta fue anulada en el examen original, posiblemente por ambigüedad o error en las opciones.
+79: &lt;strong>Explicación:&lt;/strong> La Atropina es el fármaco de primera elección para el tratamiento de la bradicardia sintomática (frecuencia cardíaca baja con signos de hipoperfusión), ya que bloquea la acción del nervio vago sobre el corazón, aumentando la frecuencia cardíaca. La dopamina o la adrenalina se usan si la atropina no es efectiva o en bloqueos más severos. Salbutamol es un broncodilatador. Dobutamina es un inotropo.
+80: &lt;strong>Explicación:&lt;/strong> Los apósitos de plata se usan por su efecto antimicrobiano en heridas infectadas o con alto riesgo de infección. Se recomienda limitar su uso a un periodo corto (generalmente 2 semanas) y reevaluar la herida; si no hay mejoría, se debe cambiar el enfoque terapéutico. No deben usarse por tiempo indefinido, ya que pueden retrasar la cicatrización o causar argiria (decoloración piel). Las otras afirmaciones son correctas.
+81: &lt;strong>Explicación:&lt;/strong> El Decreto 101/1995 sobre derechos de la madre durante el nacimiento en Andalucía garantiza el respeto, el parto natural y el derecho a tener al hijo al lado. Sin embargo, NO considera a la parturienta como "enferma", ya que el parto es un proceso fisiológico, no una enfermedad, aunque ocurra en un entorno sanitario y requiera asistencia.
+82: &lt;strong>Explicación:&lt;/strong> La Enfermera Gestora de Casos (EGC) en Andalucía se centra en pacientes con alta complejidad, necesidades de cuidados intensivos y coordinación entre niveles asistenciales. Su población diana incluye pacientes crónicos complejos, personas en final de vida y sus cuidadores principales, que requieren una gestión proactiva y coordinada de sus cuidados.
+83: &lt;strong>Explicación:&lt;/strong> El seguimiento telefónico clínico-asistencial incluye actividades directas de diagnóstico, tratamiento, seguimiento de procesos y también promoción/prevención. Sin embargo, la guía diferencia las demandas puramente administrativas (citas, trámites) de las clínico-asistenciales. La educación terapéutica SÍ se considera una actividad clínico-asistencial fundamental en el seguimiento. Por tanto, la opción C es incorrecta.
+84: &lt;strong>Explicación:&lt;/strong> Florence Nightingale es reconocida mundialmente como la pionera y fundadora de la enfermería moderna, estableciendo las bases de la profesión, la formación y la importancia de la higiene y el entorno en los cuidados. Orem desarrolló la teoría del autocuidado, Leininger la transcultural y Watson la del cuidado humanizado.
+85: &lt;strong>Explicación:&lt;/strong> El alcohol etílico es un antiséptico eficaz contra bacterias, hongos y muchos virus (especialmente los lipídicos). Sin embargo, NO es efectivo contra las esporas bacterianas, que son formas de resistencia muy difíciles de eliminar.
+86: &lt;strong>Explicación:&lt;/strong> Las recomendaciones generales de la OMS sobre actividad física para adultos incluyen 150-300 min/semana de actividad aeróbica moderada (o 75-150 min vigorosa), ejercicios de fortalecimiento muscular ≥2 días/semana y, para mayores de 65, ejercicios de equilibrio ≥3 días/semana. La recomendación de "10.000 pasos diarios" es una meta popularizada, pero no una recomendación oficial específica de la OMS en sus guías globales, que se centran en tiempo e intensidad.
+87: &lt;strong>Explicación:&lt;/strong> En la anorexia nerviosa, son intervenciones clave el apoyo emocional, la mejora de la imagen corporal y el asesoramiento nutricional (aunque este último debe ser muy cuidadoso y coordinado). La Estimulación Nerviosa Eléctrica Transcutánea (TENS) es una técnica para el manejo del dolor, no tiene indicación en el tratamiento de un TCA.
+88: &lt;strong>Explicación:&lt;/strong> El tabaquismo es un factor de riesgo cardiovascular mayor, causa de múltiples enfermedades y principal causa de muerte evitable. A corto plazo, sí favorece la trombosis por disfunción endotelial e inflamación. La afirmación D es rotundamente falsa; el tabaco, incluso moderado, aumenta el riesgo cardiovascular y la presión arterial.
+89: &lt;strong>Explicación:&lt;/strong> La Ley 41/2002 de Autonomía del Paciente establece la mayoría de edad sanitaria general a los 16 años. A partir de esa edad, el menor puede consentir la mayoría de las intervenciones, salvo excepciones específicas (ensayos clínicos, reproducción asistida, interrupción voluntaria del embarazo, donde se requiere mayoría de edad legal o regulaciones específicas).
+90: &lt;strong>Explicación:&lt;/strong> Según el PAI Embarazo, Parto y Puerperio, en la visita de la semana 36 se realiza el cribado de Estreptococo del Grupo B (EGB) mediante cultivo vagino-rectal (opción B). El estudio de coagulación no es rutinario (A es falso). El Documento de Salud de la Embarazada (DSE) se abre en la primera visita (C es falso).
+91: &lt;strong>Explicación:&lt;/strong> El tratamiento de primera línea para la incontinencia urinaria de esfuerzo (IUE) es conservador: ejercicios de suelo pélvico (Kegel), entrenamiento vesical y medidas higiénico-dietéticas (pérdida de peso si hay sobrepeso/obesidad). Los fármacos como la duloxetina (un ISRN) son de segunda o tercera línea por su eficacia limitada y efectos adversos.
+92: &lt;strong>Explicación:&lt;/strong> La Agencia de Calidad Sanitaria de Andalucía (ACSA) establece tres niveles progresivos para la certificación de competencias profesionales: Avanzado, Experto y Excelente. No existe un nivel "Básico" como tal en la certificación final.
+93: &lt;strong>Explicación:&lt;/strong> La fragilidad aumenta el riesgo de caídas. La polimedicación es un factor de riesgo importante y modificable. El ejercicio físico multicomponente (fuerza, equilibrio, resistencia) es la intervención más eficaz para prevenir caídas y mejorar la funcionalidad. Los criterios STOPP/START ayudan a revisar la medicación. Una velocidad de la marcha lenta (<0.8 m/s) es un indicador clave de fragilidad. La opción D es incorrecta porque establece un umbral de VM (<2 m/seg) demasiado alto; el punto de corte habitual para fragilidad es <0.8 m/s o <1 m/s.
+94: &lt;strong>Explicación:&lt;/strong> Son contraindicaciones absolutas para iniciar Terapia Hormonal Sustitutiva (THS) el cáncer de mama actual o pasado, cáncer de endometrio, sangrado vaginal no diagnosticado, enfermedad tromboembólica venosa (TEV) o arterial reciente, y enfermedad hepática activa grave. La HTA controlada NO es una contraindicación absoluta, aunque requiere seguimiento.
+95: &lt;strong>Explicación:&lt;/strong> La desatención unilateral (negligencia espacial) es común tras un ictus. Las intervenciones incluyen estrategias compensatorias: colocar objetos en el lado sano, estimular la atención hacia el lado afectado, asegurar la correcta posición de las extremidades afectadas (para evitar lesiones y mejorar la propiocepción), supervisar transferencias y proporcionar información realista sobre el déficit. Todas las opciones son intervenciones adecuadas.
+96: &lt;strong>Explicación:&lt;/strong> La Gestión de Casos en Andalucía es una función de enfermería de práctica avanzada. Las EGC actúan en diversos entornos (hospital, AP, domicilio, residencias). Su población diana son pacientes complejos (crónicos, paliativos, frágiles) y cuidadores. Aunque atienden a personas frágiles, no todas las personas frágiles entran automáticamente en su cartera, sino aquellas con mayor complejidad o necesidades de coordinación. Son responsables de coordinar y asegurar la continuidad y personalización de cuidados.
+97: &lt;strong>Explicación:&lt;/strong> La etapa del proceso enfermero donde se establecen los objetivos (resultados esperados - NOC) y se seleccionan las acciones (intervenciones - NIC) para alcanzarlos es la Planificación.
+98: &lt;strong>Explicación:&lt;/strong> El formaldehído (en solución acuosa, formol) es un potente desinfectante de alto nivel y esterilizante químico utilizado para material médico que no puede esterilizarse por calor. No se usa como antiséptico (sobre piel/mucosas) ni como desinsectante.
+99: &lt;strong>Explicación:&lt;/strong> El apartado de "Hábitos de Vida" en la historia clínica electrónica (Diraya) suele recoger información sobre consumo de tabaco, alcohol, drogas, dieta, actividad física y, en algunos módulos o versiones, aspectos relacionados con el bienestar emocional o el estrés percibido, aunque los datos socioeconómicos (nivel educativo, laboral) suelen ir en la sección de datos demográficos o sociales. El bienestar emocional es el que más encaja en "hábitos de vida" en un sentido amplio.
+100: &lt;strong>Explicación:&lt;/strong> Las enfermeras de hospitalización realizan la valoración al ingreso, planifican cuidados y emiten informes de continuidad al alta para asegurar la transición a AP. Pueden identificar pacientes vulnerables para servicios sociales o dependencia (aunque el registro formal en SSLD puede hacerlo trabajo social). El registro en Telecontinuidad es una herramienta específica para seguimiento post-alta programado, que puede o no ser competencia directa de toda enfermera de planta. La opción C es la menos probable como competencia generalizada de toda enfermera hospitalaria, siendo más específica de programas concretos o unidades.
+101: <strong>Explicación:</strong> En situaciones de parada cardiorrespiratoria, la primera acción recomendada es obtener un desfibrilador lo antes posible para aumentar las posibilidades de recuperación del paciente.
+102: <strong>Explicación:</strong> Si el desfibrilador no indica descarga, significa que el ritmo cardíaco del paciente no es susceptible de desfibrilación. En este caso, se debe reanudar de inmediato la RCP con 30 compresiones torácicas.
+103: <strong>Explicación:</strong> En el manejo de la EPOC estable, se recomienda el ejercicio físico porque ayuda a mejorar la disnea, la tolerancia al esfuerzo y la calidad de vida del paciente.
+104: <strong>Explicación:</strong> La evaluación de la situación clínica tras el alta debe realizarse dentro de las primeras 72 horas, ya que este seguimiento precoz permite detectar posibles complicaciones y ajustar el tratamiento.
+105: <strong>Explicación:</strong> El estadio de Contemplación en el modelo de Prochaska y DiClemente indica que la persona empieza a reconocer su conducta como problemática y considera cambiarla dentro de los próximos seis meses.
+106: <strong>Explicación:</strong> Para valorar la intensidad del dolor, se utilizan escalas como la verbal numérica, analógica visual y Wong-Baker, esta última especialmente útil en pacientes con deterioro cognitivo.
+107: <strong>Explicación:</strong> Una reducción significativa de la intensidad del dolor se considera cuando hay una disminución de al menos dos puntos en la escala de medición o una mejora funcional del 50%.
+108: <strong>Explicación:</strong> La Terapia de Aceptación y Compromiso es una intervención psicoeducativa recomendada para el manejo del dolor crónico, ayudando a mejorar la adaptación del paciente.
+109: <strong>Explicación:</strong> En cuidados paliativos, cuando la vía oral no es viable, la vía subcutánea es la opción de elección para la administración de fármacos por su eficacia y facilidad de uso.
+110: <strong>Explicación:</strong> Para la sedación paliativa en infusión continua, se recomienda diluir la medicación con suero salino fisiológico para asegurar una correcta administración.
+111: <strong>Explicación:</strong> Las úlceras por presión grado II afectan la epidermis y dermis, presentándose como una abrasión o ampolla con pérdida parcial del grosor de la piel.
+112: <strong>Explicación:</strong> Para prevenir úlceras por presión, se recomienda evitar que el cabezal de la cama se eleve más de 30º, reduciendo la presión prolongada en áreas vulnerables.
+113: <strong>Explicación:</strong> Los adultos mayores con patologías crónicas y movilidad reducida tienen un riesgo elevado en episodios de altas temperaturas, por lo que se consideran en nivel 2 o superior.
+114: <strong>Explicación:</strong> El Test de Velocidad de la Marcha es una herramienta clave en Atención Primaria para el cribado de fragilidad, permitiendo evaluar la movilidad y riesgo de dependencia.
+115: <strong>Explicación:</strong> Para reducir el riesgo de caídas, las intervenciones incluyen ejercicios de equilibrio, revisión de medicación y evaluación del entorno doméstico del paciente.
+116: <strong>Explicación:</strong> El grado III de dependencia, según la Ley 39/2006, indica que la persona necesita ayuda continua para realizar actividades básicas y presenta una pérdida severa de autonomía.
+117: <strong>Explicación:</strong> La Escala de Zarit mide la sobrecarga del cuidador, valorando el impacto físico y emocional del cuidado en su bienestar.
+118: <strong>Explicación:</strong> Una persona mayor con deterioro funcional moderado y riesgo de caídas se clasifica como "persona mayor comprometida", requiriendo vigilancia y apoyo en salud.
+119: <strong>Explicación:</strong> Los criterios STOPP/START permiten identificar prescripción inadecuada y optimizar la medicación en pacientes mayores, reduciendo el riesgo de efectos adversos.
+120: <strong>Explicación:</strong> Para ser incluido en el Plan Andaluz de Atención a Cuidadoras, se consideran criterios como el alto nivel de sobrecarga, la dedicación prolongada al cuidado y limitación en actividades personales.
+121: <strong>Explicación:</strong> En la valoración inicial de un paciente traumatizado, una puntuación de Glasgow de 15 indica que el paciente está totalmente alerta, lo cual no concuerda con la definición de traumatismo grave. Por ello, la opción C es la incorrecta para clasificar a un paciente como gravemente traumatizado.
+122: <strong>Explicación:</strong> En el abordaje de urgencias (ABCDE), la prioridad es asegurar la vía aérea y la inmovilización cervical, especialmente en caso de sospecha de lesión medular. Por eso, la primera acción es la apertura y control de la vía aérea manteniendo la alineación cervical (opción B).
+123: <strong>Explicación:</strong> Ante una sospecha de lesión medular, lo correcto es retirar el casco con atención in–line (como en la opción A) y mantener la estabilidad; aplicar un collarín rígido (opción B) puede inducir movimientos que agraven la lesión si no se gestiona adecuadamente, por ello se considera la intervención incorrecta.
+124: <strong>Explicación:</strong> Las guías indican que el torniquete debe emplearse como último recurso y aplicarse hasta extinguir el pulso distal, pero no se recomienda colocar un segundo torniquete de forma proximal si el primero resulta inefectivo, por lo que la opción C es incorrecta.
+125: <strong>Explicación:</strong> La vía intraósea es una alternativa temporal para la administración rápida de fármacos y líquidos cuando no es posible obtener acceso venoso. La tibia proximal es el sitio preferido en adultos, mientras que utilizar el húmero proximal (opción C) no es la opción de primera línea, lo que hace a esta opción incorrecta.
+126: <strong>Explicación:</strong> En el shock hipovolémico se deben reponer líquidos y controlar la hemorragia; la administración de vasodilatadores (opción C) es contraria a estos objetivos, ya que pueden empeorar la hipotensión, por lo que esta opción es incorrecta.
+127: <strong>Explicación:</strong> Aunque en el manejo de traumatismo craneal se deben evitar tanto la hipotensión como la hipoxia, la hipertensión también puede aumentar la presión intracraneal y agravar la lesión. En este contexto, se destaca la importancia de evitar la hipertensión (opción B) para preservar la perfusión cerebral.
+128: <strong>Explicación:</strong> Un neumotórax a tensión es una emergencia que requiere intervención inmediata (como la descompresión), no simplemente la observación de la saturación. Por ello, la opción B es incorrecta al sugerir sólo controlar la saturación y observar la evolución.
+129: <strong>Explicación:</strong> En situaciones de intubación difícil se utilizan dispositivos como el tubo nasofaríngeo, Combitubo o Air-Q para facilitar el acceso. La mascarilla laríngea Fastrach (opción D) no se incluye habitualmente en el protocolo para intubación difícil, siendo la opción incorrecta.
+130: <strong>Explicación:</strong> Para la inducción en intubación se utilizan fármacos como etomidato, fentanilo o propofol, mientras que la naloxona es un antagonista de opioides y no forma parte del manejo anestésico en este procedimiento, por lo que se evita su uso.
+131: <strong>Explicación:</strong> La vacuna Tdpa en gestación se administra de forma intramuscular, debe ser suministrada en cada embarazo y puede coadministrarse con la vacuna COVID-19. Todas las afirmaciones son correctas, de ahí que la opción D sea la respuesta.
+132: <strong>Explicación:</strong> Aunque la Tdpa se recomienda en el embarazo, la vacuna frente a la tosferina en su forma de vacuna viva atenuada (cuando se refiere a la vacuna no combinada Tdpa) está contraindicada durante la gestación, haciendo correcta la opción B según el criterio establecido en este examen.
+133: <strong>Explicación:</strong> Según el Calendario de Vacunación en Andalucía, se establecen pautas claras para la administración de vacunas en embarazadas. La afirmación de que “durante la gestación están contraindicadas, por precaución, las vacunas atenuadas” (opción D) resulta falsa en este contexto, ya que la contraindicación se aplica según situaciones específicas y no de forma generalizada.
+134: <strong>Explicación:</strong> La pauta de vacunación para el VPH en personas en grupo de riesgo se recomienda con 3 dosis con intervalos de 0, 2 y 6 meses, lo que confirma que la opción B es la respuesta correcta.
+135: <strong>Explicación:</strong> Según el calendario vacunal de Andalucía, a la edad de 3 años se administra la vacuna TV (sarampión, rubeola, parotiditis) de forma exclusiva, por lo que la opción C es la correcta.
+136: <strong>Explicación:</strong> En la siguiente visita de Elena, se debe administrar la vacuna DTPa-VPI a los 6 años, de acuerdo con el Calendario de Vacunación de Andalucía 2023, lo que hace a la opción B la respuesta correcta.
+137: <strong>Explicación:</strong> En adultos que ya han recibido la VNC13 y la VNP23, no se contempla la administración adicional de VNC20 según las pautas vigentes en Andalucía. La opción D es correcta al indicar que no se requiere dosis adicional.
+138: <strong>Explicación:</strong> En pacientes anticoagulados, la vacuna COVID-19 se administra por vía intramuscular utilizando una aguja adecuada, y se debe mantener presión prolongada sobre el sitio de inyección para prevenir hematomas. Por ello, la combinación de las opciones A y C (opción D) es la respuesta correcta.
+139: <strong>Explicación:</strong> La contraindicación absoluta para la vacunación frente a COVID-19 es haber experimentado una reacción anafiláctica a una dosis previa de la vacuna, lo que descarta las demás opciones y confirma la opción C.
+140: <strong>Explicación:</strong> En el caso de una herida incisa limpia, si el paciente tiene una dosis de Td administrada hace 12 años, se considera que está protegida y no requiere refuerzo, por lo que la opción A es la correcta.
+141: <strong>Explicación:</strong> La verificación de la identidad del paciente se debe hacer con datos esenciales como el nombre completo, la fecha de nacimiento y el NUHSA, garantizando la seguridad del proceso asistencial. Por ello, la opción A es la adecuada.
+142: <strong>Explicación:</strong> La profilaxis antibiótica sistemática de forma rutinaria en catéteres venosos centrales está desaconsejada por el riesgo de desarrollar resistencias. Las otras medidas de asepsia y cambios de apósito son recomendadas, por lo que la opción B es incorrecta.
+143: <strong>Explicación:</strong> NotificASP es una plataforma para reportar incidentes de forma voluntaria y anónima, y su uso no está restringido únicamente a los profesionales que interactúan directamente con el paciente. Por ello, la opción C es incorrecta en cuanto a la exclusividad de su uso.
+144: <strong>Explicación:</strong> Entre las buenas prácticas para el manejo de medicamentos de alto riesgo, no se recomienda almacenar soluciones concentradas de electrolitos en zonas de uso de enfermería, ya que esto puede aumentar el riesgo de errores en la administración. Así, la opción C es la respuesta incorrecta.
+145: <strong>Explicación:</strong> El seguimiento después del alta hospitalaria se realiza preferentemente mediante un contacto telefónico en las primeras 24 horas o, en su defecto, con una visita domiciliaria antes de las 48 horas, lo que favorece una transición segura del paciente. Por ello, la opción A es correcta.
+146: <strong>Explicación:</strong> La modificación o cancelación de la Voluntad Vital Anticipada requiere del mismo proceso formal que su inscripción. La opción D es incorrecta al sugerir que se puede modificar de manera sencilla sin seguir los mismos procedimientos formales.
+147: <strong>Explicación:</strong> Un test de Richmond con una puntuación de 8 indica baja motivación para el cambio, lo que implica que Ana aún no está suficientemente comprometida para dejar de fumar en el corto plazo, confirmando la opción A.
+148: <strong>Explicación:</strong> Una puntuación de 2 en el Test de Fagerström resulta demasiado baja para valorar de forma concluyente la dependencia física a la nicotina, considerándose que dicha puntuación no permite establecer un nivel de dependencia válido, por lo que la opción D es la respuesta.
+149: <strong>Explicación:</strong> Según el Proceso Asistencial Integrado de Atención a las Personas Fumadoras, la intervención inicial consiste en un consejo sanitario que permita evaluar y motivar al paciente para cesar el consumo de tabaco. Por ello, se da prioridad a derivar al paciente hacia una intervención avanzada solo en casos necesarios, haciendo a la opción A la respuesta correcta.
+150: <strong>Explicación:</strong> Aunque el IMC se calcula correctamente dividiendo el peso en kg por el cuadrado de la talla en metros y se utiliza para identificar sobrepeso y obesidad, la recomendación de ofrecer intervención intensiva suele aplicarse a adultos con IMC ≥ 30. En este contexto, la opción D resulta incorrecta según el criterio del examen, ya que se considera erróneo establecer la intervención intensiva en función exclusiva de ese umbral sin considerar otros factores clínicos.
+151: <strong>Explicación:</strong> El proceso Hepatitis Vírica en Atención Primaria aborda situaciones como la presencia de signos y síntomas clínicos compatibles con hepatitis aguda o crónica, hallazgos bioquímicos o serológicos positivos, y la identificación de la población en riesgo. Sin embargo, no se incluyen los casos de hepatitis delta y hepatitis E, por lo que la opción D es la respuesta correcta.
+152: <strong>Explicación:</strong> El diagnóstico de enfermería “Riesgo de deterioro de la integridad cutánea” se ubica en el dominio de Seguridad/Protección, correspondiente al dominio 11, ya que se enfoca en prevenir daños y proteger la piel del paciente; por ello, la opción D es la correcta.
+153: <strong>Explicación:</strong> Según el artículo 4 de la Ley 44/2003, las funciones de los profesionales sanitarios no se limitan exclusivamente a ámbitos específicos como la administración, la gestión clínica o el trabajo en equipo, sino que se establecen de manera general sin asignar funciones concretas en esos ámbitos, haciendo que la opción D sea la respuesta correcta.
+    `; // Añade aquí más líneas con el formato "número: explicación"
+
+    // Contenido del examen (extraído del archivo subido)
+    const fileContent = `
+
+1   La Constitución Española señala que los poderes públicos garantizarán, mediante pensiones adecuadas y periódicamente actualizadas, la suficiencia económica a los ciudadanos durante la tercera edad, en su artículo:
+A) 50.
+B) 51.
+C) 52.
+D) 53.
+Respuesta correcta C
+
+2   La Junta de Andalucía es la institución en que se organiza políticamente el autogobierno de la Comunidad Autónoma, y está integrada por el Parlamento de Andalucía, la Presidencia de la Junta y el Consejo de Gobierno. Además, el Estatuto de Autonomía de nuestra Comunidad (Ley Orgánica 2/2007, de 19 de marzo) establece que otras instituciones y órganos regulados en el mismo texto legal forman parte también de la organización de la Junta de Andalucía, y entre estos se encuentra:
+A) Defensor del Pueblo Andaluz.
+B) Consejo de Trasparencia.
+C) Cámara de Comercio de Andalucía.
+D) Consejo de Radiotelevisión Pública de Andalucía.
+Respuesta correcta C
+
+3   La normativa vigente y de máximo rango legal en el ámbito de la Unión Europea (UE), sobre la protección de las personas físicas en lo que respecta al tratamiento de datos personales, y a la libre circulación de estos datos, es:
+A) El Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo, de 27 de abril de 2016.
+B) El Tratado de Lisboa, firmado en 2007.
+C) La Carta de los Derechos Fundamentales de la UE.
+D) La Directiva 95/46/CE (Reglamento general de protección de datos).
+Respuesta correcta A
+
+4   Los pinchazos accidentales constituyen un importante problema de salud laboral por su relativa alta frecuencia (son el accidente con riesgo biológico más corriente) y por las consecuencias que pueden comportar desde el punto de vista de contagio. Todas las siguientes son recomendaciones básicas que deben seguirse para evitar accidentes de este tipo, EXCEPTO:
+A) Desechar las pipetas de vidrio con el borde roto.
+B) No manipular residuos en el interior de los contenedores, ya que estos pueden contener en su interior agujas y material punzante o cortante.
+C) No volver a encapsular las agujas ya usadas.
+D) Usar guantes desechables para cualquier manipulación de material sanitario.
+Respuesta correcta A
+
+5   El Estatuto Marco del personal estatutario de los servicios de salud (Ley 55/2003), señala en su artículo 10, como principal instrumento de configuración y cohesión del Sistema Nacional de Salud (SNS), y que conocerá, debatirá y, en su caso, emitirá recomendaciones sobre los criterios para la coordinación de la política de recursos humanos del SNS:
+A) A la Comisión de Recursos Humanos del Sistema Nacional de Salud.
+B) Al Consejo Interterritorial del Sistema Nacional de Salud.
+C) Al Ministerio de Sanidad.
+D) Al Foro Marco para el Diálogo Social.
+Respuesta correcta B
+
+6   Referido a la obtención por primera vez de la Tarjeta Sanitaria de Andalucía, todas las siguientes afirmaciones son ciertas, EXCEPTO:
+A) Supone el registro del solicitante en la Base de Datos de personas usuarias (BDU).
+B) Al solicitar la tarjeta es imprescindible que el/la ciudadano/a señale el centro de atención primaria y profesional de medicina de familia o pediatría que desea.
+C) Requiere la acreditación de la residencia en Andalucía mediante certificado de empadronamiento.
+D) Es necesario presentar el modelo de solicitud, cumplimentado, en un centro de atención primaria.
+Respuesta correcta B
+
+7   Cuando hablamos del “conjunto de recomendaciones basadas en una revisión sistemática de la evidencia y en la evaluación de los riesgos y beneficios de las diferentes alternativas, con el objetivo de optimizar la atención sanitaria a los pacientes”, nos estamos refiriendo a:
+A) Una vía clínica.
+B) Un procedimiento normalizado de trabajo.
+C) Una guía de práctica clínica.
+D) Un protocolo clínico.
+Respuesta correcta D
+
+8   Una de las principales herramientas para llevar a cabo una investigación cualitativa es el grupo focal. De las siguientes opciones, seleccione la opción INCORRECTA:
+A) El grupo focal es una técnica de conversación en grupo en donde existe un moderador de la conversación, y en la que los participantes describen los detalles, minuciosamente, de las experiencias complejas y razonamientos que dirigen sus acciones, creencias, percepciones y actitudes.
+B) El objetivo central es recopilar información sobre un tópico específico, pero se hace en forma grupal debido a que se entiende que la participación individual se puede enriquecer a través de la interacción entre los miembros de dicho grupo.
+C) Los grupos focales se fundamentan en la interacción que  se produce dentro del grupo, basándose en los temas proporcionados por el moderador.
+D) La interacción entre los participantes no es la característica distintiva de los grupos focales, puesto que no se pone en evidencia la manera de ver el mundo, el lenguaje que utilizan para referirse a un asunto y los valores o creencias acerca de una situación.
+Respuesta correcta A
+
+9   El Decreto 96/2004, de 9 de marzo, reconoce el derecho de la ciudadanía a la garantía de plazo de respuesta en procesos asistenciales, primeras consultas de asistencia especializada y procedimientos diagnósticos en el Sistema Sanitario Público de Andalucía. En el caso de las primeras consultas de asistencia especializada, ¿cuál es el plazo de respuesta establecido en el referido decreto?
+A) 30 días.
+B) 45 días.
+C) 60 días.
+D) 90 días.
+Respuesta correcta C
+
+10   ¿Cómo se calcula el valor predictivo positivo de una prueba diagnóstica?
+A) Dividiendo el número de verdaderos positivos entre la suma de verdaderos positivos y falsos negativos.
+B) Dividiendo el número de verdaderos negativos entre la suma de verdaderos negativos y falsos negativos.
+C) Dividiendo el número de verdaderos positivos entre la suma de verdaderos positivos y falsos positivos.
+D) Dividiendo el número de verdaderos negativos entre la suma de verdaderos negativos y falsos positivos.
+Respuesta correcta B
+
+11   En relación a los Indicadores Demográficos Básicos del Instituto Nacional de Estadística, cuando se habla de Indicadores de Mortalidad infantil se refiere a las defunciones ocurridas:
+A) Las primeras 4 semanas de la vida.
+B) Los primeros 6 meses de vida.
+C) Antes de cumplir el primer año de vida.
+D) Antes de cumplir el tercer año de vida.
+Respuesta correcta D
+
+12   Una de las siguientes opciones NO ES una medida de tendencia central en Bioestadística:
+A) La Mediana.
+B) La Varianza.
+C) La Media aritmética.
+D) La Moda.
+Respuesta correcta B
+
+13   En el proceso de acreditación profesional de la Agencia de Calidad Sanitaria de Andalucía, en función de los porcentajes de evidencias demostrados u obtenidos en cada uno de los grupos de evidencias (Grupo I, II y III), el resultado podrá ser la Certificación en grado Avanzado, Experto o Excelente. El porcentaje de evidencias requerido para obtener el GRADO DE EXCELENTE es:
+A) Todas las evidencias esenciales de Grupo I y el 70% de las evidencias del Grupo II.
+B) Todas las evidencias del Grupo II y el 80% de las evidencias del Grupo III.
+C) El 60% de las evidencias del Grupo I, incluyendo todas las esenciales, el 70% de las del Grupo II y el 80% de las del Grupo III.
+D) El 50% de las evidencias del Grupo I, incluyendo todas las esenciales, el 60% de las del Grupo II y el 70% de las del Grupo III.
+Respuesta correcta B
+
+14       La 'Tarjeta +Cuidado' pretende establecer medidas de discriminación positiva para mejorar la atención y la accesibilidad al sistema sanitario de las personas con gran discapacidad y las afectadas de Alzheimer y otras demencias, y a las personas que las cuidan, entendiendo la especial situación en la que se encuentran facilitando la intimidad y la personalización. ¿Dónde se encuentran recogidas estas medidas?
+A) Plan Andaluz del Alzheimer.
+B) Estrategia de Cuidados de Andalucía.
+C) Plan de Atención a Cuidadoras Familiares de Andalucía.
+D) Ley 41/2002, 14 noviembre. Autonomía del paciente y derechos y obligaciones en materia de información y documentación clínica.
+Respuesta correcta B
+
+15   Respecto a los límites que se definen en los Proceso Asistenciales Integrados, marca la opción correcta:
+A) Se considera límite final a los aspectos, situaciones y actividades que, formando parte del proceso, no se van a abordar y/o formalizar.
+B) Se considera límite marginal a las características específicas (diagnósticas, terapéuticas…) a partir de las cuales no se describen más actividades.
+C) Se definen los límites de entrada, límites marginales y límite final del proceso, de tal forma que resulta sencillo delimitar dónde empieza y dónde terminan la secuencia de actividades.
+D) Se considera límite marginal el fallecimiento de la persona.
+Respuesta correcta A
+
+16   Si nos referimos al impacto o efecto de una acción llevada a cabo en las mejores condiciones posibles o experimentales hablamos de:
+A) Eficiencia.
+B) Eficacia.
+C) Efectividad.
+D) Case Mix.
+Respuesta correcta C
+
+17   ¿Cuál de los siguientes escenarios NO forma parte del Plan de Calidad del Sistema Sanitario Público de Andalucía?
+A) Espacio compartido.
+B) Ciudadanía.
+C) Gestión clínica.
+D) Profesionales.
+Respuesta correcta C
+
+18   ¿Cuál de las siguientes opciones corresponde a tipos de estudios descriptivos?
+A) Estudios de casos clínicos, series de casos y estudios transversales.
+B) Estudios ecológicos, series de casos y estudios de cohortes.
+C) Estudios experimentales, series de casos y estudios transversales.
+D) Estudios de casos y controles, estudios de cohortes y estudios cuasi-experimentales.
+Respuesta correcta D
+
+19   En relación a las punciones arteriales, ¿qué valora el test de Allen?
+A) Valora el flujo sanguíneo de la arteria que vamos a canalizar.
+B) Valora el estado de la circulación periférica del paciente.
+C) Valora la circulación colateral, con el fin de proteger la mano de una posible isquemia en caso de aparición de cualquier complicación.
+D) Es la maniobra para colocar la mano en la posición adecuada para realizar una ecografía Doppler.
+Respuesta correcta A
+
+20   Entre los principales hitos esperados de lenguaje-audición, desde el nacimiento a los 3 meses de edad, nos encontramos:
+A) Se sobresalta ante los ruidos fuertes.
+B) Disfruta con los juguetes musicales.
+C) Arrulla y gorjea con inflexiones.
+D) Todas las respuestas son correctas.
+Respuesta correcta B
+
+21   ¿Cuál de las siguientes opciones se considera un objetivo de la “Relación enfermera-paciente"?
+A) Ayudar a la persona a comprender su problema.
+B) Ayudar a la persona a ser agente de su propio proceso de cambio.
+C) Ayudar a la persona a expresar sus ideas y sentimientos.
+D) Todas las opciones son correctas.
+Respuesta correcta C
+
+22   Para realizar el diagnóstico de una determinada conducta, ¿qué instrumento propone explorar los factores predisponentes, facilitadores y reforzantes de dicha conducta?
+A) Modelo de Prochaska y Di Clemente.
+B) Modelo PRECEDE.
+C) Modelo de etapas del cambio.
+D) Modelo de Gagne.
+Respuesta correcta C
+
+23   Señala cuál de las siguientes definiciones es la recogida en la publicación de la Junta de Andalucía "Ética y muerte digna" referida a la Limitación del Esfuerzo Terapéutico (LET):
+A) Es la retirada (en inglés, withdraw) o no inicio (en inglés, withhold) de medidas terapéuticas de soporte vital porque el profesional sanitario estima que, en la situación concreta del paciente, son inútiles o fútiles ya que tan sólo consiguen prolongarle la vida biológica, pero sin posibilidad de proporcionarle una recuperación funcional con una calidad de vida mínima.
+B) Consiste en la cesación (omisión) de intervenciones terapéuticas que se limitan a prolongar la vida biológica de un paciente que se encuentra en situación de enfermedad terminal o irreversible.
+C) Prolongación de la vida biológica de un paciente con una enfermedad grave e irreversible o terminal mediante la tecnología médica, cuando su beneficio es irrelevante en términos de recuperación funcional o mejora de la calidad de vida. En tal situación los medios tecnológicos utilizados en estas circunstancias se consideran extraordinarios o desproporcionados.
+D) Actuación de un profesional sanitario que produce de forma deliberada la muerte de su paciente con una enfermedad irreversible, porque éste, siendo capaz, se lo pide de forma expresa, reiterada y mantenida, por tener una vivencia de sufrimiento derivada de su enfermedad que experimenta como inaceptable, y que no se ha conseguido mitigar por otros medios.
+Respuesta correcta D
+
+24   ¿Cuál de las siguientes afirmaciones es correcta en relación a las competencias de la enfermera de práctica avanzada (EPA) en Heridas Crónicas Complejas en el Servicio Andaluz de Salud?
+A) Los usuarios con heridas crónicas complejas pueden pedir cita presencial con la EPA de su Área de Salud.
+B) Cualquier profesional de la Salud puede demandar la consulta y/o asesoría de la EPA en heridas crónicas complejas.
+C) Las úlceras crónicas de baja prevalencia (epidermólisis bullosa, calcifilaxis, etc.) no son competencia de las EPAs y serán derivadas para mejor control a sus Unidades Hospitalarias de referencia.
+D) Todas son correctas.
+Respuesta correcta D
+
+25   Respecto a la Intervención Avanzada para la deshabituación tabáquica en nuestra Comunidad, es cierto que:
+A) La intervención avanzada solo debe realizarse a nivel individual, mientras que la intervención grupal es apropiada en la intervención básica.
+B) Existen Unidades de Apoyo donde los profesionales pueden derivar a los pacientes que reúnan criterios.
+C) Se realiza seguimiento de las personas exfumadoras hasta los 12 meses del abandono al tabaco.
+D) Se utiliza el test de Richmond para valorar la dependencia física a la nicotina.
+Respuesta correcta B
+
+26   ¿En qué etapa evolutiva del desarrollo, según Jean Piaget, se da el razonamiento abstracto?
+A) Operaciones formales.
+B) Operaciones concretas.
+C) Preoperacional.
+D) Sensoriomotora.
+Respuesta correcta C
+
+27   Aquellas personas que se hayan identificado en la valoración como cuidadores primarios de pacientes incluidos en el servicio de Atención Domiciliaria, forman parte de la población diana de Atención Domiciliaria. ¿Cuál es un criterio de exclusión de este servicio?
+A) El riesgo de cansancio del rol de cuidador.
+B) El cansancio del rol de cuidador.
+C) Dificultad para afrontar el cuidado.
+D) La negación del cuidador a pertenecer al servicio.
+Respuesta correcta D
+
+28   En relación al Plan de Acción Personalizado, señale la opción INCORRECTA:
+A) Es un proceso de colaboración entre pacientes o personas cuidadoras y profesionales sanitarios.
+B) Solo puede ser utilizado en los pacientes crónicos complejos priorizados tras la realización de la valoración integral exhaustiva.
+C) Es un instrumento de intervención en pacientes crónicos complejos o en situación de cronicidad.
+D) Es un pacto de objetivos entre ambas partes en pro de la mayor participación y autogestión para abordar y afrontar condiciones crónicas de salud.
+Respuesta correcta A
+
+29   La Escala INTERMED permite:
+A) Valorar el grado de complejidad de una persona hospitalizada para su agrupación por GRD (grupos relacionados por el diagnóstico).
+B) Planificar los cuidados según el modelo de V. Henderson.
+C) Realizar una valoración estandarizada de la complejidad y planificar la asistencia de la persona, desde una perspectiva multidisciplinar.
+D) La Escala INTERMED se encuentra en fase de elaboración.
+Respuesta correcta C
+
+30   Respecto a las actividades de los/las enfermeras durante la valoración focalizada, según la Clasificación Avanzada de Puntos Fijos de Urgencias de Atención Hospitalaria y Atención Primaria, podemos decir que todas son correctas EXCEPTO:
+A) Asignación de un nivel de prioridades según escala validada de 5 niveles.
+B) Activación de circuitos de atención preferente mediados por el factor tiempo.
+C) Determinación del nivel de complejidad.
+D) Solicitud de pruebas diagnósticas.
+Respuesta correcta A
+
+31   En el cribado de fragilidad a mayores de 70 años en Atención Primaria, decimos que una persona se encuentra en situación de fragilidad si presenta:
+A) Índice de Barthel = 10 puntos y Test Batería SPPB < 10 puntos.
+B) Índice de Barthel > 90 puntos y Test Batería SPPB < 10 puntos.
+C) Índice de Barthel > 90 puntos y Test Batería SPPB ≥ 10 puntos.
+D) Índice de Barthel > 90 puntos, Batería SPPB ≥ 10 puntos y alto riesgo de caídas.
+Respuesta correcta D
+
+32   Señale el objetivo del Plan Integral de Atención a la Accidentabilidad de Andalucía:
+A) Reducir la incidencia de accidentes en Andalucía.
+B) Reducir la mortalidad causada por los accidentes.
+C) Mejorar la calidad de vida de las personas lesionadas y apoyo a sus cuidadores/as.
+D) Todas las opciones son correctas.
+Respuesta correcta B
+
+33   ¿Qué herramienta se emplea en la visita domiciliaria de un paciente dependiente para valorar el apoyo social percibido, no el real?
+A) Apgar Familiar.
+B) Índice de esfuerzo del cuidador.
+C) Duke-Unc.
+D) Zarit.
+Respuesta correcta D
+
+34   En el Sistema de Gestión y Ayuda para el seguimiento telemático de los pacientes que precisan de cuidados paliativos en el SSPA, se contempla información relativa a:
+A) Cuidadores, grupo patológico, nivel de complejidad, información del paciente, tratamiento, solicitudes, actividades y asistencia por el 061.
+B) Grupo patológico, entorno social, nivel de complejidad, información del paciente, tratamiento, solicitudes, actividades y asistencia por el 061.
+C) Cuidadores, grupo patológico, nivel de complejidad, organización sanitaria, tratamiento, solicitudes, actividades y asistencia por el 061.
+D) Cuidadores, grupo patológico, nivel de complejidad, información del paciente, tratamiento, solicitudes y actividades.
+Respuesta correcta D
+
+35   ¿Cuáles son las etapas del Proceso Enfermero?
+A) Recogida de datos, análisis y resultados.
+B) Valoración, planificación, ejecución y revaloración.
+C) Valoración, ejecución, evaluación y revaloración.
+D) Valoración, diagnóstico, planificación, ejecución y evaluación.
+Respuesta correcta D
+
+36   Indique la opción INCORRECTA respecto a las reacciones adversas de un medicamento:
+A) Es cualquier respuesta nociva, no deseada e imprevista que produce un medicamento.
+B) La infancia y la tercera edad son más sensibles a las reacciones adversas.
+C) Las enfermedades renales y hepáticas pueden aumentar las reacciones adversas.
+D) Son los laboratorios y las agencias reguladoras encargadas de autorizar medicamentos y los únicos encargados de la seguridad de los medicamentos.
+Respuesta correcta C
+
+37   ¿Cuántas fases forman el Ciclo de la Violencia de L. Walker?
+A) Dos.
+B) Tres.
+C) Cuatro.
+D) Cinco.
+Respuesta correcta A
+
+38   Cuando se aprecia dolor en el punto de acceso con eritema o edema y endurecimiento con cordón venoso palpable en el área de punción de un catéter venoso, según la guía FASE para la prevención de infecciones asociadas al uso de dispositivos venosos, estamos frente a una flebitis medida con la escala de Maddox de grado:
+A) Grado 2.
+B) Grado 3.
+C) Grado 4.
+D) Grado 5.
+Respuesta correcta A
+
+39   Indique la opción INCORRECTA según el Proceso Asistencial Integrado (PAI) Atención al Trauma Grave con respecto a la intubación orotraqueal:
+A) Se debe preoxigenar al paciente antes de iniciar la inducción anestésica previa a la intubación.
+B) Tras cuatro intentos de intubación fallidos se debe considerar un método alternativo para asegurar la vía aérea.
+C) Si la secuencia rápida de intubación falla se debe utilizar maniobras básicas de apertura de la vía aérea y un dispositivo supraglótico.
+D) Se debe realizar una secuencia rápida de intubación (SRI) en paciente politraumatizado dado el riesgo de aspiración al no poder garantizar el ayuno.
+Respuesta correcta D
+
+40   ¿De cuál de los siguientes síntomas existe evidencia sólida de su relación directa con el período de la menopausia?
+A) Atrofia urogenital.
+B) Infecciones urinarias de repetición.
+C) Hipertensión arterial.
+D) Todas son correctas.
+Respuesta correcta C
+
+41   ¿Cuál de las siguientes afirmaciones NO ES CORRECTA si realizamos un lavado gástrico a un paciente por ingesta de sustancias tóxicas?
+A) Invitar al paciente a colocarse en posición sentada para la inserción del catéter.
+B) Colocar al paciente en posición de decúbito lateral izquierdo y Trendelemburg para realizar el lavado gástrico.
+C) Está indicado realizar el lavado gástrico hasta 6-8 horas posterior a la ingesta de fármacos como AAS, anticolinérgicos o narcóticos.
+D) Si se dispone de un antídoto para el tóxico, mezclarlo con carbón activado potencia el efecto.
+Respuesta correcta A
+
+42   ¿Qué puntación tendrá en la Escala de Norton, un anciano con estado físico malo, estado mental apático, que deambula con ayuda, movilidad ligeramente limitada e incontinencia total?
+A) 10.
+B) 12.
+C) 14.
+D) 15.
+Respuesta correcta A
+
+43   En el Proceso Asistencial Integrado “Diabetes Mellitus”, se define como límite final del proceso:
+A) Diabetes por trastornos específicos (diabetes monogénicas, enfermedad pancreática y enfermedad endocrina por aumento de hormonas contra-reguladoras).
+B) Diabetes en el contexto de multimorbilidad.
+C) Desaparición de factores de riesgo para el desarrollo de diabetes.
+D) Complicaciones avanzadas de la diabetes y su tratamiento específico.
+Respuesta correcta A
+
+44   En el proceso de acompañamiento al duelo, una vez identificada la situación, el siguiente paso es conocer qué fase del duelo está afrontando la persona atendida en relación a la fecha de fallecimiento del ser querido. De acuerdo con este criterio, ¿ante qué tipo de duelo nos enfrentamos si el doliente presenta negación, búsqueda de la persona fallecida, rabia, dolor y llanto?
+A) Duelo tardío.
+B) Duelo temprano.
+C) Duelo latente.
+D) Duelo agudo.
+Respuesta correcta D
+
+45   Entre los puntos claves en relación a la sedación paliativa NO SE ENCUENTRA:
+A) La intención es aliviar el sufrimiento.
+B) Es necesario registrar en la historia clínica el consentimiento informado, así como los tratamientos instaurados y las resistencias a estos.
+C) La sedación está indicada exclusivamente en un paciente que está en tratamiento paliativo.
+D) Solo debe de plantearse ante la presencia de uno o más síntomas refractarios.
+Respuesta correcta B
+
+46   Señale la opción INCORRECTA respecto a la deshidratación en pediatría:
+A) La disminución de la diuresis y el nivel de alerta alterado son síntomas de deshidratación.
+B) Se considera hiponatremia cuando la pérdida de sodio es mayor que la de agua.
+C) La concentración normal de sodio en plasma es de 135-145 mEq/L.
+D) Bradicardia y bradipnea son signos de shock clínico por deshidratación.
+Respuesta correcta B
+
+47   La población diana a la que va dirigida la oferta de servicio de Atención Domiciliaria es:
+A) Pacientes inmovilizados.
+B) Pacientes incluidos en cuidados paliativos y sus cuidadoras.
+C) Personas que requieren cuidados en el hogar tras un episodio de hospitalización.
+D) Todas son ciertas.
+Respuesta correcta C
+
+48   ¿Cuál de las siguientes opciones es característica de la valoración enfermera?
+A) Debe ser correcta, completa y organizada.
+B) Incluye la recogida y validación de datos.
+C) Constituye la base para las decisiones y actuaciones enfermeras posteriores.
+D) Todas las opciones son correctas.
+Respuesta correcta B
+
+49   Dentro de las competencias y nuevos roles en los cuidados de Enfermería, se han definido en nuestra Comunidad perfiles específicos de enfermeras de práctica avanzada (EPA). Señale cuál de las siguientes se ha desarrollado como EPA en nuestra Comunidad:
+A) EPA en la Atención a personas con heridas crónicas complejas.
+B) EPA en la Atención a personas con tratamientos complejos para la diabetes.
+C) EPA en la Atención a personas con ostomías.
+D) Todas se han desarrollado como EPAs en nuestra Comunidad.
+Respuesta correcta C
+
+50   Señale el cuestionario dirigido a la población general que valora las actividades instrumentales de la vida diaria:
+A) Escala de Karnofsky.
+B) Escala de Norton.
+C) Escala de Lawton Brody.
+D) Test de Pfeiffer.
+Respuesta correcta D
+
+51   ¿Qué fórmula permite calcular el metabolismo basal?
+A) Índice de GARROW.
+B) Ecuación de Harris-Benedict.
+C) Cuestionario Malnutrition Universal Screening Tool (MUST).
+D) Índice de Masa Corporal.
+Respuesta correcta B
+
+52   La rama de la Farmacología que estudia los efectos bioquímicos y fisiológicos de los fármacos, y sus mecanismos de acción para efectuarlos, se denomina:
+A) Farmacocinética.
+B) Farmacodinamia.
+C) Farmacoterapia.
+D) Farmacogénesis.
+Respuesta correcta C
+
+53   Lucía que tiene 17 años acude a nuestra consulta. Revisamos su registro de vacunación y está todo correcto salvo que sólo tiene puesta una dosis de vacuna frente al virus del papiloma humano (VPH) a los 12 años. ¿Qué pauta seguimos?
+A) Administramos 1 dosis de VPH para completar la vacunación.
+B) Administramos 2 dosis de VPH con un intervalo mínimo de 4 meses entre ellas.
+C) Iniciaremos la pauta con 3 dosis y un intervalo de 0,2 y 6 meses.
+D) Con la edad que tiene Lucia no necesitaría más dosis.
+Respuesta correcta B
+
+54   ¿En qué fase del desarrollo sexual de la persona de Sigmund Freud, aparece el conflicto de atracción hacia los padres del sexo contrario, conocido como complejo de Edipo y de Elektra, respectivamente?
+A) Fase oral.
+B) Fase anal.
+C) Fase fálica.
+D) Fase genital.
+Respuesta correcta C
+
+55   Según el Calendario de Vacunaciones de Andalucía, la vacuna del Haemophilus influenzae b se pone a los:
+A) 2 meses, 4 meses y 15 meses.
+B) 4 meses, 12 meses y 12 años.
+C) 2 meses, 4 meses y 11 meses.
+D) 4 meses y 6 meses.
+Respuesta correcta A
+
+56   Según recoge el Programa de Salud Infantil y Adolescente de Andalucía, en referencia a la detección precoz de hipoacusia infantil, señale la opción correcta:
+A) Se debe explorar la audición en todas las visitas de seguimiento a toda la población infantil hasta los 3 años.
+B) El cribado mediante realización de otoemisiones acústicas a los recién nacidos se realizará en situación de riesgo.
+C) Se debe valorar la presencia de factores de riesgo de hipoacusia para realizar preferentemente prueba de potenciales evocados auditivos antes de los 3 meses de vida.
+D) El cribado universal se realiza mediante potenciales evocados auditivos a todos los recién nacidos.
+Respuesta correcta D
+
+57   ¿Cuál de las siguientes opciones NO se puede considerar una situación de “alto riesgo” de transmisión vertical VIH?
+A) Parto domiciliario y cesárea de emergencia en gestante con VIH.
+B) Ausencia de terapia antirretroviral durante la atención prenatal en gestante con VIH.
+C) Profilaxis antirretroviral al recién nacido de madre infectada por VIH.
+D) Ausencia de programa de prevención con antirretrovirales maternos antes o durante el embarazo.
+Respuesta correcta B
+
+58   Indique la opción INCORRECTA, dentro de las medidas generales que debemos tomar ante una crisis comicial, en un paciente pediátrico en urgencias durante los cinco primeros minutos:
+A) Tener en cuenta que la administración de más de dos dosis de benzodiacepinas durante una misma crisis comicial aumenta el riesgo de depresión respiratoria.
+B) Administrar oxígeno a altas concentraciones para mejorar la hipoxia cerebral.
+C) En caso de no disponer de vía venosa usar la vía rectal, administrando Diazepam como fármaco de primera elección.
+D) Uso de Fenitoína como fármaco de elección en crisis que no ceden tras dos dosis de benzodiacepinas.
+Respuesta correcta A
+
+59   Los criterios de activación del código ICTUS, en el Servicio Andaluz de Salud, son:
+A) Tiempo de inicio de síntomas < 6 horas o de inicio desconocido o ictus del despertar.
+B) Situación basal de el/la paciente mediante escala Rankin ≤ 2.
+C) Focalidad neurológica.
+D) Todas las anteriores son criterios de activación.
+Respuesta correcta D
+
+60   En relación a los PICC (catéter central de inserción periférica), señale la respuesta INCORRECTA:
+A) Los catéteres de poliuretano (PUR) son catéteres de alto flujo de infusión.
+B) A igualdad de calibre los catéteres PUR tienen menor luz interna que los de silicona.
+C) Los catéteres PUR admiten el uso de pruebas diagnósticas con contraste.
+D) Los catéteres de silicona tienen el inconveniente de no admitir las altas presiones por el riesgo de rotura del catéter.
+Respuesta correcta D
+
+61   El Índice Tobillo Brazo (ITB), es el cociente entre la presión sistólica máxima en el tobillo y la presión sistólica en el brazo, y permite la criba de Enfermedad Arterial Periférica (EAP). Un valor entre 0.41 y 0.90, ¿cómo se interpretará?
+A) Isquemia leve/moderada.
+B) Normal.
+C) Isquemia severa.
+D) Valores límite.
+Respuesta correcta A
+
+62   Indique la opción INCORRECTA en referencia a un paciente con riesgo cardiovascular en tratamiento con anticoagulantes orales directos:
+A) Si se le olvidó una toma debemos indicarle que la tome en cuanto lo recuerde y la siguiente a su horario habitual, excepto en el caso de Dabigatrán en el que deben pasar 6 horas entre dosis.
+B) Si son cápsulas puede abrirlas y disolver el contenido en líquidos o comida.
+C) Si son comprimidos puede triturarlos y disolverlos en agua o alguna bebida.
+D) Si son cápsulas debe mantenerlas almacenadas en ese envase original para preservarla de la humedad.
+Respuesta correcta C
+
+63   Cuando adoptamos medidas para retardar o reducir las secuelas de una enfermedad, hablamos de:
+A) Prevención primaria.
+B) Prevención secundaria.
+C) Prevención terciaria.
+D) Prevención cuaternaria.
+Respuesta correcta B
+
+64   En relación a la escala FRAIL (señale la opción correcta):
+A) Es un instrumento para la detección precoz y valoración de fragilidad.
+B) Consta de 5 preguntas sencillas relativas, cada una de ellas a un dominio (Fatigabilidad, Resistencia, Deambulación, Comorbilidad y Pérdida de Peso).
+C) La presencia de cada ítem se valora con 1 punto y se obtiene la suma.
+D) Todas las opciones son correctas.
+Respuesta correcta B
+
+65   ¿Qué tipo de vendaje usaríamos para mantener alineados los extremos óseos en una fractura de clavícula?
+A) Cabestrillo.
+B) Vendaje en 8 de Guarismo.
+C) Dama de Elche.
+D) Desault-Payrd.
+Respuesta correcta D
+
+66   Según recoge el Proceso Asistencial Integrado Diabetes, se recomienda el autoanálisis de glucemia capilar de forma rutinaria en pacientes con Diabetes Mellitus tipo 2, fuera del periodo inicial tras el diagnóstico, cuando:
+A) Estén en tratamiento con insulina.
+B) Estén en tratamiento con fármacos que pueden producir hipoglucemias.
+C) Existan datos de episodios de hipoglucemias.
+D) Todas las opciones son correctas.
+Respuesta correcta A
+
+67   ¿Qué escala utilizaremos para evaluar la salud general de una cuidadora?
+A) Cuestionario de Zarit.
+B) Cuestionario de Moretti.
+C) Cuestionario de Brass.
+D) Cuestionario de Goldberg.
+Respuesta correcta A
+
+68   La “Actividad física planificada, estructurada y sistemática que implica conciencia de la práctica e intencionalidad”, se denomina:
+A) Actividad física.
+B) Ejercicio físico.
+C) Deporte.
+D) Todas las opciones son correctas.
+Respuesta correcta B
+
+69   Entre las enfermedades incluidas en el Programa de Cribado Neonatal de Enfermedades Endocrino-metabólicas de Andalucía, NO se encuentra:
+A) Diabetes tipo 1 (DM tipo1).
+B) Deficiencia múltiple de carboxilasa (MCD).
+C) Defecto del transporte de la carnitina (CUD).
+D) Fenilcetonuria.
+Respuesta correcta B
+
+70   Para autorizar la instauración del sistema de monitorización flash de la glucosa (MFG) a las personas con Diabetes Mellitus tipo 2 (DM2) que cumplan criterios, se consideran requisitos indispensables:
+A) La supervisión de una persona cuidadora en el caso de falta de autonomía para el autocuidado.
+B) Tener un nivel adecuado de educación terapéutica en diabetes por parte del paciente o de la persona cuidadora.
+C) Demostrar buena adherencia a las recomendaciones del equipo sanitario.
+D) Todas las opciones son correctas.
+Respuesta correcta D
+
+71   ¿Qué es DIRAYA?
+A) Una palabra de origen árabe que significa salud.
+B) Es el sistema que se utiliza en el Servicio Andaluz de Salud como soporte de la historia clínica electrónica.
+C) Un programa que capacita para adquirir buenos hábitos en salud.
+D) Ninguna opción es correcta.
+Respuesta correcta B
+
+72   Según el Examen de Salud para Mayores de 65 años, ¿qué índice de Barthel tendrá una persona mayor autónoma?
+A) 100.
+B) 50.
+C) 10.
+D) 0.
+Respuesta correcta C
+
+73   ¿Cuál de las siguientes escalas mide el riesgo de desarrollar úlceras por presión?
+A) Escala de Glasgow.
+B) Escala de Gijón.
+C) Escala de Norton.
+D) Escala Dowton.
+Respuesta correcta D
+
+74   ¿Qué concentración obtendremos si de una ampolla de Midazolán de 3 ml, con 5 mg/ml, extraemos 2 ml y la diluimos en una jeringa con 8 ml de suero fisiológico?
+A) 1 mg/ml.
+B) 2 mg/ml.
+C) 5 mg/ml.
+D) 10 mg/ml.
+Respuesta correcta D
+
+75   ¿A qué autor debemos la Teoría del Desarrollo Cognitivo?
+A) Freud.
+B) Lancaster.
+C) Piaget.
+D) Power.
+Respuesta correcta A
+
+76   ¿Qué podemos hacer para disminuir el dolor de los pinchazos, durante la infancia, cuando se administran vacunas?
+A) Se recomienda que el niño esté en brazos de su madre o sujetado por ella.
+B) En los más pequeños, el amamantamiento simultáneo es muy eficaz.
+C) También pueden utilizarse parches anestésicos previos a la inoculación.
+D) Todas son opciones correctas.
+Respuesta correcta B
+
+77   De los siguientes métodos anticonceptivos que se enumeran, ¿cuál se considera un método definitivo?
+A) Implante subcutáneo.
+B) Anillo vaginal.
+C) Preservativo femenino.
+D) Vasectomía.
+Respuesta correcta B
+
+78   ¿Cómo se llama a la representación gráfica (en forma de árbol) de la información básica de al menos tres generaciones de una familia?
+A) Línea de vida.
+B) Genograma.
+C) Historia familiar.
+D) Las opciones A) y C) son ciertas.
+Respuesta correcta ANULADA
+
+79   De los siguientes fármacos, ¿cuál sería el de primera elección en un paciente con bradicardia severa?
+A) Dopamina.
+B) Salbutamol.
+C) Atropina.
+D) Dobutamina.
+Respuesta correcta D
+
+80   Para el uso seguro de los apósitos de plata debemos tener unas consideraciones. ¿Cuál de las siguientes NO lo es?
+A) Utilizar dos semanas y si no hay mejoría reevaluar.
+B) Pueden provocar decoloración de la piel.
+C) Su presentación podrá ser en espuma, alginatos y pasta.
+D) Se pueden usar por tiempo indefinido.
+Respuesta correcta A
+
+80   Para el uso seguro de los apósitos de plata debemos tener unas consideraciones. ¿Cuál de las siguientes NO lo es?
+A) Utilizar dos semanas y si no hay mejoría reevaluar.
+B) Pueden provocar decoloración de la piel.
+C) Su presentación podrá ser en espuma, alginatos y pasta.
+D) Se pueden usar por tiempo indefinido.
+Respuesta correcta A
+
+81   Indique cuál de los siguientes derechos NO se encuentra recogido en el decreto de la Junta de Andalucía en el que se determinan los derechos de la madre en el ámbito sanitario durante el proceso del nacimiento:
+A) Ser tratada con el máximo respeto, corrección y comprensión.
+B) A tener un parto natural, a no acelerarlo ni retrasarlo, excepto cuando sea necesario por el estado de salud de la parturienta o el feto.
+C) Ser considerada como enferma, lo que conlleva todos los derechos establecidos por la ley.
+D) Tener a su lado a su hijo o hija durante su estancia en el hospital.
+Respuesta correcta D
+
+82   La población diana de la enfermera gestora de casos (EGC) en la Comunidad Autónoma Andaluza está formada por:
+A) Sólo aquellos pacientes crónicos complejos definidos por el PAI Atención a Pacientes Pluripatológicos.
+B) Personas que no presenten el diagnóstico Gestión Ineficaz de la Propia Salud y sus cuidadoras.
+C) Pacientes con patologías complejas, necesidad de apoyo para Educación Terapéutica y múltiples ingresos hospitalarios pero no sus cuidadoras.
+D) Pacientes con condiciones crónicas y personas en la etapa final de la vida, con necesidades de cuidados complejos que requieren intervenciones de alta intensidad, de diferentes tipos de profesionales, y en entornos diversos; también las cuidadoras de estas personas.
+Respuesta correcta D
+
+83   En la guía para el seguimiento telefónico de pacientes por parte de los profesionales del Sistema Sanitario Público de Andalucía (SSPA), se consideran demandas de tipo clínico asistencial (señale la respuesta INCORRECTA):
+A) Las actividades asistenciales de atención individual, diagnósticas, terapéuticas y rehabilitadoras.
+B) Las actividades asistenciales de seguimiento de procesos agudos o crónicos.
+C) No deben incluirse en esta categoría las actividades de educación terapéutica.
+D) Las actividades de promoción de la salud y prevención de la enfermedad.
+Respuesta correcta D
+
+84   A Florence Nightingale se le conoce por:
+A) Desarrollar la Teoría del déficit de autocuidado.
+B) Ser considerada líder de la enfermería transcultural.
+C) Ser considerada la fundadora de la enfermería moderna.
+D) Desarrollar la Teoría científica del cuidado.
+Respuesta correcta C
+
+85   El alcohol etílico es un antiséptico que puede presentar alguna actividad frente a (señale la INCORRECTA):
+A) Virus.
+B) Esporas.
+C) Bacterias.
+D) Hongos.
+Respuesta correcta A
+
+86   ¿Cuál de las siguientes opciones NO puede considerarse una recomendación general de la OMS sobre actividad física?
+A) Realizar ejercicios de fortalecimiento muscular de los grandes grupos musculares dos o más veces a la semana.
+B) Realizar un mínimo de 150 minutos semanales de actividad aeróbica moderada o 75 minutos semanales de actividad aeróbica vigorosa (o una combinación de ambas).
+C) En el caso de personas mayores de 64 años, dedicar 3 o más días a la semana a realizar actividad física para mejorar el equilibrio y evitar caídas.
+D) La OMS recomienda dar 6.000 pasos diarios.
+Respuesta correcta D
+
+87   En una persona que padece un Trastorno de la Conducta Alimentaria (TCA) como la Anorexia Nerviosa, ¿qué intervención enfermera NO será adecuada?
+A) 5246 Asesoramiento Nutricional (NIC).
+B) 1540 Estimulación Nerviosa Eléctrica Transcutánea (NIC).
+C) 5270 Apoyo Emocional (NIC).
+D) 5220 Mejora de la Imagen Corporal (NIC).
+Respuesta correcta A
+
+88   Atendiendo al Plan Integral de Tabaquismo de Andalucía, indique cuál de las siguientes afirmaciones NO es correcta:
+A) El consumo de tabaco es la causa más importante de morbimortalidad evitable en Andalucía.
+B) El tabaquismo es causa y factor de riesgo de aparición de enfermedades cerebrovasculares (ictus).
+C) El consumo de tabaco, a corto plazo, favorece la formación de trombos a través de mecanismos de inflamación y disfunción del endotelio.
+D) El consumo moderado de tabaco protege del aumento de la presión arterial en personas mayores.
+Respuesta correcta C
+
+89   ¿Cuál es la edad que establece, con carácter general, la mayoría de edad sanitaria para la toma de decisiones, atendiendo a la Ley 41/2002 de Autonomía del paciente?
+A) Es el Comité Ético de los Centros Sanitarios el que regula la mayoría de edad sin consentimiento parental.
+B) Con carácter general se establece en los 16 años, permitiendo consentir la asistencia sanitaria.
+C) Se establece a los 14 años cuando el menor demuestra capacidad para la toma de decisiones.
+D) Se establece a los 18 años porque es la edad en la que se alcanza la capacidad para comprender, evaluar y expresar sus decisiones.
+Respuesta correcta A
+
+90   Atendiendo al P.A.I. Embarazo, Parto y Puerperio (3ª edición, 2014), durante la valoración a la gestante en la semana 36 se debe llevar a cabo la siguiente actuación:
+A) Se recomienda realizar estudio de coagulación rutinario previo a la analgesia neuroaxial en gestantes sanas.
+B) Se solicitará cultivo vagino-rectal del estreptococo del Grupo B (salvo aislamiento previo en orina o antecedentes de infección neonatal por este microorganismo).
+C) Se procederá a la apertura y cumplimentación del Documento de Salud de la Embarazada (DSE).
+D) Ninguna de las respuestas es correcta.
+Respuesta correcta C
+
+91   ¿Cuál de las siguientes opciones NO se considera de primera opción para el tratamiento de la incontinencia urinaria de esfuerzo?
+A) Ejercicios de suelo pélvico.
+B) Entrenamiento de la vejiga.
+C) Inhibidor de la recaptación de serotonina y noradrenalina.
+D) Pérdida de peso.
+Respuesta correcta D
+
+92   ¿Cuáles son los niveles de certificación en la acreditación de competencias profesionales de la ACSA (Agencia de Calidad Sanitaria de Andalucía)?
+A) Nivel Avanzado, Experto y Excelente.
+B) Nivel Básico, Avanzado y Experto.
+C) Nivel I, Nivel II y Nivel III.
+D) Ninguna de las anteriores es correcta.
+Respuesta correcta D
+
+93   De las siguientes afirmaciones sobre fragilidad y caídas en personas mayores, señale la respuesta INCORRECTA:
+A) El consumo de fármacos es el factor de riesgo de caídas más fácilmente modificable.
+B) La práctica de ejercicio físico es la medida más eficaz para prevenir eventos adversos de la fragilidad, como caídas.
+C) Los criterios STOPP/START son muy útiles para detectar prescripción inadecuada.
+D) Se considera con alta probabilidad de fragilidad a aquellas con test de Velocidad de la Marcha (VM) < 2 m/seg.
+Respuesta correcta B
+
+94   ¿Cuál de las siguientes patologías NO es una contraindicación para iniciar THS (terapia hormonal sustitutiva)?
+A) Tromboembolismo venoso previo.
+B) HTA controlada.
+C) Enfermedad hepática aguda.
+D) Todas son contraindicaciones.
+Respuesta correcta C
+
+95   ¿Qué intervenciones se deben realizar durante el ingreso hospitalario a pacientes con ictus y desatención unilateral?
+A) Proporcionar afirmaciones realistas acerca del déficit perceptivo del paciente.
+B) Asegurar que las extremidades afectadas estén en una posición correcta.
+C) Supervisar y/o ayudar en la transferencia y la deambulación.
+D) Todas las opciones son correctas.
+Respuesta correcta B
+
+96   ¿Cuál de las siguientes afirmaciones es correcta en relación a la Gestión de Casos en el Sistema Sanitario Público de Andalucía?
+A) Los contextos asistenciales involucran Hospitales, Centros de Salud, domicilio y Residencias de Mayores de titularidad pública.
+B) En nuestro sistema sanitario, la gestión de casos se considera una práctica avanzada de enfermería con perfil específico de competencias.
+C) Todas las personas frágiles, con síndromes geriátricos, integran la cartera de clientes de las enfermeras gestoras de casos.
+D) Las enfermeras gestoras de casos son responsables de que tanto los pacientes como sus familiares reciban atención integral y personalizada.
+Respuesta correcta B
+
+97   ¿Cuál es la etapa del proceso enfermero en la que se determinan los resultados deseados e identifican las intervenciones para lograrlos?
+A) Evaluación.
+B) Planificación.
+C) Diagnóstico.
+D) Ejecución.
+Respuesta correcta D
+
+98   El formaldehído es un:
+A) Antiséptico.
+B) Desinsectante.
+C) Desinfectante.
+D) Esterilizante.
+Respuesta correcta B
+
+99   ¿Cuál de los siguientes apartados se explora desde el Registro de Hábitos de Vida de Diraya AP?
+A) Nivel educativo.
+B) Situación laboral.
+C) Bienestar emocional.
+D) Todos se exploran desde este apartado.
+Respuesta correcta C
+
+100  Dentro de las competencias de la enfermera de Atención Hospitalaria en el Servicio Andaluz de Salud, NO aparece:
+A) Realizar informes de continuidad de cuidados al Alta.
+B) Registrar en el soporte sanitario a la Ley de Dependencia (SSLD) a los pacientes vulnerables.
+C) Registrar en la aplicación de Telecontinuidad de Cuidados para el seguimiento telefónico al alta hospitalaria (fines de semana, festivos y vísperas) a los pacientes susceptibles.
+D) Valoración del paciente al ingreso en su Unidad.
+Respuesta correcta C
+
+CASO PRÁCTICO 1:
+Davinia, una enfermera que se encontraba en un partido de baloncesto, presencia el desvanecimiento de un hombre que cae al suelo y parece inconsciente. Lo atiende ella en primer lugar. Al explorarlo, tras llamarlo y estimularlo mediante sacudidas en los hombros, se da cuenta de que el paciente no se mueve ni responde, no tiene pulso y no presenta esfuerzo respiratorio (no se auscultan sonidos ni movimiento de aire en nariz o boca). Se establece que se encuentra en parada cardiorrespiratoria.
+
+101   Si continúa estando sola en la atención del paciente, lo primero que debería hacer Davinia en la cadena de supervivencia es:
+A) Colocarle en posición de seguridad.
+B) Avisar a emergencias.
+C) Comenzar las maniobras de soporte vital básico.
+D) Pedir el desfibrilador más cercano.
+Respuesta correcta D
+
+102   Una vez iniciadas las maniobras de soporte vital, aparece otro espectador con un desfibrilador externo automático disponible en el estadio. Davinia enciende el equipo y lo coloca en el paciente; tras el análisis del ritmo, no se indica descarga. En este caso, la enfermera deberá:
+A) Cesar las maniobras de soporte vital, ya que el paciente presenta un ritmo no desfibrilable.
+B) Reiniciar, pasados 30 segundos, la reanimación cardiopulmonar con 30 compresiones.
+C) Reiniciar, pasados 30 segundos, la reanimación cardiopulmonar con 20 compresiones.
+D) Reiniciar inmediatamente la reanimación cardiopulmonar con 30 compresiones.
+Respuesta correcta D
+
+103   Con el soporte vital básico prestado por Davinia, el paciente se recupera de la parada, recupera el ritmo sinusal y comienza a ventilar espontáneamente. Al ir estabilizándose y con la familia presente, se conoce que el paciente, llamado Juan, está diagnosticado de enfermedad pulmonar obstructiva crónica (EPOC) y se encuentra seguido en consulta de neumología. Según el Proceso Asistencial Integrado de la EPOC, en relación a la realización de ejercicio físico en pacientes con EPOC estable, se recomienda:
+A) Realizar solo ejercicio físico si el paciente lo realizaba antes del diagnóstico.
+B) Realizar ejercicio físico porque mejora la disnea, la calidad de vida y la tolerancia al ejercicio.
+C) No realizar ejercicio físico para no aumentar la necesidad de oxigenación y que aparezca disnea.
+D) Ninguna es correcta.
+Respuesta correcta A
+
+104   Una vez trasladado al hospital, y en caso de alta hospitalaria, en Atención Primaria se recomienda realizar una evaluación de la situación clínica del paciente:
+A) En las 24-72 horas posteriores.
+B) En las 72-96 horas posteriores.
+C) En la primera semana tras la recepción del informe de alta.
+D) De manera preferente en el primer hueco asignable en consulta.
+Respuesta correcta B
+
+105   Juan, anteriormente fumador, logró dejar el tabaco con la ayuda de la enfermera de familia. Para valorar su disposición al cambio, se utiliza el modelo de los Estadios de Cambio de Prochaska y DiClemente. Según este modelo, cuando el paciente se encuentra en el estadio de Contemplación significa que:
+A) No considera que su conducta sea un problema y no tiene intención de cambiar.
+B) Empieza a ver su conducta como problemática y se plantea la posibilidad de dejar el tabaco en los siguientes seis meses.
+C) Ya ha tomado la decisión de modificar su conducta en los próximos 30 días.
+D) Ha dejado de fumar y se mantiene sin consumir cigarrillos durante al menos 24 horas.
+Respuesta correcta A
+
+106   Juan presenta dolor crónico no oncológico de origen musculoesquelético. Según el Proceso Asistencial Integrado de Dolor Crónico no Oncológico, para valorar la intensidad del dolor se recomienda utilizar:
+A) Escala verbal numérica.
+B) Escala analógica visual.
+C) Escala de expresión facial de Wong-Baker para pacientes con discapacidad intelectual o deterioro cognitivo.
+D) Todas son ciertas.
+Respuesta correcta C
+
+107   En la valoración de la intensidad del dolor, se considera que se ha reducido significativamente la intensidad o repercusión funcional cuando la disminución es de:
+A) Al menos dos puntos.
+B) Al menos un 50% sobre el valor inicial.
+C) Ambas respuestas A) y B) son correctas.
+D) Ninguna de las respuestas es correcta.
+Respuesta correcta C
+
+108   En el Plan Terapéutico para dolor crónico no oncológico de Juan, se recomienda aplicar, como intervención psicoeducativa, la:
+A) Terapia de Conceptos Positivos.
+B) Terapia de Aceptación y Compromiso.
+C) Terapia de Sustitución e Ideación.
+D) Todas las respuestas son ciertas.
+Respuesta correcta D
+
+109   Si la situación clínica de Juan derivara a cuidados paliativos, según el Proceso Asistencial Integrado de Cuidados Paliativos, se indica como vía de elección para la administración de fármacos (cuando la vía oral resulta difícil):
+A) Vía transdérmica.
+B) Vía subcutánea.
+C) Vía intravenosa.
+D) Vía intraósea.
+Respuesta correcta C
+
+110   Si la situación clínica de Juan continúa deteriorándose y se requiere sedación paliativa, al preparar la medicación para infusión continua se recomienda diluirla con:
+A) Suero salino fisiológico.
+B) Suero glucosalino.
+C) Agua estéril para inyección.
+D) Suero Ringer lactato.
+Respuesta correcta A
+
+CASO PRÁCTICO 2:
+Pepe de 85 años y Antonia 83 años, viven en una zona rural. Antonia, quien sufre de Alzheimer (estado avanzado) y otras patologías, sufrió una caída recientemente y presentó en el hospital la exclusión de fractura de cadera; desde entonces, no se mueve por dolor y le aparece una úlcera por presión (UPP) en la zona glútea.
+
+111   A su llegada, la enfermera observa una lesión en la zona glútea con pérdida parcial del grosor de la piel (afectando epidermis y dermis) con aspecto de abrasión. ¿De qué grado será la úlcera por presión?
+A) Grado I.
+B) Grado II.
+C) Grado III.
+D) Grado IV.
+Respuesta correcta D
+
+112   Para prevenir que se sigan desarrollando UPP en Antonia y que la que ya tiene empeore, la enfermera da recomendaciones a Pepe, basadas en la GUIA Fase de UPP. ¿Cuál de las siguientes recomendaciones será adecuada?
+A) En pacientes con incontinencia se usarán absorbentes de una talla mayor para mayor absorción.
+B) Evitar que el cabezal de la cama se eleve en más de 30º.
+C) Usar cojines de asiento tipo rosco cuando pasen mucho tiempo sentados.
+D) Uso de cremas y colonias para masajear vigorosamente la piel.
+Respuesta correcta C
+
+113   Al llegar a casa, la enfermera observa que hace mucho calor y está empezando el verano; por ello, ambos se consideran dentro del grupo de riesgo de Altas Temperaturas. ¿A qué nivel de riesgo pertenecen?
+A) Nivel 0.
+B) Nivel 1.
+C) Nivel 2.
+D) Nivel 3.
+Respuesta correcta C
+
+114   En Andalucía, siguiendo las recomendaciones del Ministerio de Sanidad para el cribado de fragilidad (“SALUD65+: Envejecimiento activo y atención a la fragilidad”), ¿qué test se empleará en Atención Primaria?
+A) Escala de Tinetti.
+B) Test de Fagerström.
+C) Test de velocidad de la marcha.
+D) Escala de Riesgo de caídas.
+Respuesta correcta C
+
+115   Tras la caída de Antonia, el Equipo de Atención Primaria realizará una intervención multicomponente para valorar y disminuir el riesgo de caídas. De las siguientes, ¿cuál NO será una intervención?
+A) Ejercicios de fuerza y equilibrio.
+B) Revisión de la medicación.
+C) Evaluación de riesgos en el hogar.
+D) Estimulación auditiva y sensorial.
+Respuesta correcta B
+
+116   En la valoración de Antonia, se determina que necesita ayuda para realizar diversas actividades básicas diariamente y presenta pérdida de autonomía. Según la Ley 39/2006, ¿qué grado de dependencia tendrá?
+A) Grado I.
+B) Grado II.
+C) Grado III.
+D) Grado IV.
+Respuesta correcta C
+
+117   Pepe se siente saturado y teme que, si le ocurre algo a él, no habrá quién cuide a Antonia. La enfermera le aplica una escala para valorar la sobrecarga del cuidador. ¿A qué escala se refiere?
+A) Índice de esfuerzo del cuidador.
+B) Escala de Zarit.
+C) Escala Duke-Unc.
+D) Escala Dowton.
+Respuesta correcta D
+
+118   Se realiza una valoración funcional a Pepe, encontrándose: Índice de Barthel = 90, Índice Lawton-Brody < 5, Test de velocidad en la marcha < 0,8 m/seg y una pregunta positiva en la Escala de Riesgo de Caídas. ¿Cómo lo clasificaremos?
+A) Persona mayor autónoma.
+B) Persona mayor comprometida.
+C) Persona mayor frágil.
+D) Persona mayor en situación de dependencia.
+Respuesta correcta B
+
+119   Se realiza la valoración de la polimedicación de Pepe, según los criterios STOPP/START. ¿Cuál es la opción correcta según estos criterios?
+A) Los criterios STOPP/START son un método de triage de catástrofes.
+B) Son idóneos para aplicación en el ámbito hospitalario.
+C) Constituyen dos grupos: STOPP (“parar”) y START (“empezar”).
+D) Se requiere aproximadamente 15 minutos para aplicarlo.
+Respuesta correcta D
+
+120   Pepe cumple el perfil de cuidador de paciente con gran discapacidad, susceptible de recibir los beneficios del Plan Andaluz de Atención a Cuidadoras. ¿Cuál de las siguientes NO será un criterio para su inclusión?
+A) Tienen un alto nivel de sobrecarga.
+B) Precisan de cuidados por parte de la Enfermera Gestora de Casos.
+C) Conviven o pasan más de 10 horas al día en el domicilio de cuidado.
+D) Cuidar supone limitación en tiempo libre, cambios en planes personales, etc.
+Respuesta correcta A
+
+CASO PRÁCTICO 3:
+Carla y Mario sufren un accidente de moto tras una salida con amigos. Carla pierde el control, cae; Mario sale despedido y pierde el casco, que no llevaba bien ajustado. Al llegar, se realiza la valoración:
+• Carla: Consciente y orientada, casco integral, presenta fractura abierta de fémur derecho con sangrado masivo y parálisis en miembros inferiores. Constantes: TA 100/55, FC 115, FR 15, Glasgow 14.
+• Mario: Consciente y obnubilado, sin casco, presenta traumatismo craneal (TC), facial y torácico. Constantes: TA 140/75, FC 120, FR 23, Glasgow 12.
+
+121   Indique cuál de las siguientes opciones NO está incluida o es INCORRECTA en los criterios para ser considerado un traumatizado grave en la valoración inicial:
+A) Lesión penetrante en cabeza, cuello, tórax, abdomen y extremidades proximales a codo o rodilla.
+B) Tórax inestable.
+C) Puntuación en la escala de coma de Glasgow de 15.
+D) Fractura con hundimiento o abierta del cráneo.
+Respuesta correcta C
+
+122   Indique cuál es la primera acción que hay que realizar con Carla durante la valoración inicial:
+A) Atención a la hemorragia catastrófica externa.
+B) Apertura y control de la vía aérea con control cervical.
+C) Respiración.
+D) Circulación.
+Respuesta correcta B
+
+123   Debido a la parálisis que Carla manifiesta en sus miembros inferiores, se sospecha lesión medular aguda. ¿Cuál de las siguientes opciones sería una intervención INCORRECTA en este caso?
+A) Quitar el casco entre dos personas, manteniendo la posición neutra de la cabeza.
+B) Colocación de collarín rígido para mantener la alineación e inmovilización cervical.
+C) Administración precoz de metilprednisolona.
+D) Monitorización cardíaca, hemodinámica y mantenimiento de la tensión arterial.
+Respuesta correcta B
+
+124   Indique la opción INCORRECTA respecto a los torniquetes, si se planteara hacer uno a Carla:
+A) Solo se aplican cuando han fracasado otras medidas de hemostasia.
+B) Se aplica presión hasta lograr la desaparición del pulso distal.
+C) Si resulta inefectivo se puede aplicar otro torniquete proximal.
+D) Las guías clínicas indican que retrasar su aplicación afecta negativamente a la eficacia.
+Respuesta correcta C
+
+125   Tras varios intentos fallidos de canalizar una vía venosa, se decide poner vía intraósea. ¿Cuál de las siguientes opciones es INCORRECTA respecto a esta técnica?
+A) Es una alternativa temporal cuando es difícil canalizar venosa periférica o central.
+B) La tibia proximal es el sitio preferido para la inserción manual en adultos.
+C) El húmero proximal es un sitio alternativo a la tibia.
+D) La infusión rápida de líquidos viscosos se debe hacer a través de una bolsa de presión.
+Respuesta correcta C
+
+126   Indique la opción INCORRECTA tras detectar que Carla sufre un shock hipovolémico por pérdida de sangre:
+A) Se puede utilizar el Índice de Shock para evaluar el grado.
+B) Iniciar perfusión de cristaloides.
+C) Asociar fármacos vasodilatadores a los cristaloides.
+D) Valorar el uso de ácido tranexámico.
+Respuesta correcta C
+
+127   Debido al traumatismo craneal sufrido por Mario, ¿qué debemos evitar para mantener una adecuada perfusión cerebral?
+A) Hipotensión.
+B) Hipertensión.
+C) Hipoxia.
+D) Evitar tanto la hipotensión como la hipoxia.
+Respuesta correcta B
+
+128   Durante la valoración inicial de Mario se observa asimetría en la elevación del tórax. De las siguientes intervenciones, ¿cuál es INCORRECTA?
+A) Administrar oxígeno.
+B) En caso de neumotórax a tensión, controlar saturación de oxígeno y observar evolución.
+C) Realización de electrocardiograma (EKG).
+D) En caso de necesitar toracotomía, ésta puede ser anterolateral, posterolateral o esternal.
+Respuesta correcta B
+
+129   Tras varios intentos fallidos de intubación en Mario debido a dificultades causadas por traumatismo facial, ¿cuál de los siguientes NO pertenece al material de uso en intubación difícil?
+A) Tubo nasofaríngeo.
+B) Combitubo.
+C) Air-Q.
+D) Mascarilla laríngea Fastrach.
+Respuesta correcta D
+
+130   De los siguientes fármacos, ¿cuál NO usaríamos en el proceso de intubación de Mario?
+A) Naloxona.
+B) Etomidato.
+C) Fentanilo.
+D) Propofol.
+Respuesta correcta A
+
+CASO PRÁCTICO 4:
+Lucía, de 32 años, está embarazada de 27 semanas y acude a consulta de enfermería acompañada de su hija Elena (3 años) y de su padre Ignacio (68 años), con antecedentes de EPOC, FA, factores de riesgo cardiovascular y fumador. Lucía desea aprovechar para que su padre también se someta a seguimiento por sus patologías.
+
+131   Al encontrarse Lucía en la semana 27 de embarazo se pondrá la vacuna Tdpa (tétanos, difteria y tosferina). Señale la opción correcta en relación a esta vacuna:
+A) La vacuna Tdpa se administra vía intramuscular.
+B) La vacuna Tdpa se administra en cada embarazo.
+C) Se puede coadministrar con la vacuna del COVID-19.
+D) Todas son correctas.
+Respuesta correcta D
+
+132   ¿Qué vacuna está contraindicada durante la gestación?
+A) Vacuna frente a la gripe.
+B) Vacuna frente a la tosferina.
+C) Vacuna frente a COVID-19.
+D) Vacuna triple vírica.
+Respuesta correcta B
+
+133   En cuanto a la vacunación en embarazadas, según el Calendario de Vacunaciones en Andalucía, señale la respuesta FALSA:
+A) La vacuna frente a la tosferina se administra idealmente entre la semana 27 y 28 de embarazo para conseguir el máximo rendimiento de la vacunación; está contraindicada a partir de la semana 36.
+B) Se recomienda la vacunación frente a la COVID-19 durante el embarazo, en cualquier trimestre.
+C) En el caso de la vacuna del virus del papiloma humano, se recomienda su administración antes del embarazo o tras el parto.
+D) Durante la gestación están contraindicadas, por precaución, las vacunas atenuadas.
+Respuesta correcta D
+
+134   En la Historia de Lucía se identifica que pertenece al grupo de riesgo de infección por el VPH (por antecedentes y conización realizada hace 2 años). Al revisar su registro de vacunas, se comprueba que está bien vacunada. Señale la respuesta correcta:
+A) Tiene puestas 2 dosis de VPH con un intervalo de 6 meses entre ellas.
+B) Tiene puestas 3 dosis de VPH con la pauta 0,2 y 6 meses.
+C) Tiene puestas 3 dosis de VPH con la pauta 0,1 y 12 meses.
+D) Todas son falsas.
+Respuesta correcta B
+
+135   Lucía solicita aprovechar la visita para poner a su hija Elena la vacuna que le corresponde a los 3 años, ya que aún no ha podido asistir. ¿Qué vacunas se administrarán a Elena a los 3 años?
+A) Vacuna contra Varicela y vacuna contra Meningococo B.
+B) Vacuna TV (sarampión, rubeola, parotiditis) y vacuna frente a Varicela.
+C) Solo vacuna TV (sarampión, rubeola, parotiditis).
+D) Vacuna DTPa-VPI (vacuna frente a tétanos, difteria, tosferina de alta carga antigénica y poliomielitis).
+Respuesta correcta C
+
+136   ¿Qué vacunas se deben administrar a Elena en la siguiente visita, según el Calendario de Vacunación de Andalucía 2023?
+A) Vacuna dTpa (tétanos, difteria, tosferina) a los 6 años.
+B) Vacuna DTPa-VPI a los 6 años.
+C) Vacuna Td (tétanos, difteria) a los 14 años.
+D) Vacuna DTPa-VPI a los 14 años.
+Respuesta correcta B
+
+137   En relación a Ignacio, el padre de Lucía, se revisa su calendario vacunal. Se observa que tiene puestas la VNC13 y la VNP23. Su hija pregunta si debe administrarse la VNC20. Señale la respuesta correcta:
+A) No precisa dosis adicionales.
+B) Se administrará una dosis única de VNC20 a partir de 12 meses de la última VNP23.
+C) Se administrará una dosis única de VNC20 a partir de 6 meses de la última VNP23.
+D) Ninguna es correcta.
+Respuesta correcta D
+
+138   Se detecta que Ignacio tiene pendiente una dosis de vacuna frente a COVID-19. Dado que está anticoagulado por FA y tratado con Acenocumarol, ¿qué consideraciones se deben tener?
+A) Emplear la vía intramuscular; la inyección debe ser profunda, utilizando aguja de calibre máximo 23 G.
+B) En pacientes anticoagulados, las vacunas de COVID-19 deben administrarse por vía subcutánea.
+C) Para favorecer la hemostasia, se debe presionar la zona de punción durante al menos 2 minutos.
+D) Las respuestas A) y C) son correctas.
+Respuesta correcta D
+
+139   Es una contraindicación para la vacunación frente a COVID-19:
+A) Enfermedad febril.
+B) Alergia al huevo.
+C) Haber tenido una reacción alérgica anafiláctica a una dosis previa de la vacuna.
+D) Todas son correctas.
+Respuesta correcta C
+
+140   Ignacio comenta que ayer se cortó mientras preparaba la comida y se curó la herida como siempre. Presenta una herida incisa limpia y tiene una dosis de Td administrada hace 12 años. Según la pauta de profilaxis del tétanos, ¿qué se debe hacer?
+A) Está bien vacunado, no se necesita refuerzo.
+B) Completar la primovacunación.
+C) Completar la primovacunación y administrar IGT en sitio separado.
+D) Administrar 4 dosis de Td, con intervalos 0-1-6-12 meses.
+Respuesta correcta A
+
+CASO PRÁCTICO 5:
+141   En el ingreso hospitalario de Jorge, la enfermera verifica la pulsera identificativa para confirmar:
+A) Nombre, apellidos, fecha de nacimiento y número único de Historia de Salud de Andalucía (NUHSA).
+B) Nombre, apellidos, unidad de ingreso y NUHSA.
+C) Nombre, apellidos, número de habitación y NUHSA.
+D) Ninguna de las anteriores.
+Respuesta correcta A
+
+142   Tras canalizar un catéter venoso central (CVC) en el post-quirófano, ¿cuál de las siguientes recomendaciones es INCORRECTA según la Guía Fase para la prevención de infecciones asociadas al uso de dispositivos venosos?
+A) Desinfectar los puertos de inyección con alcohol al 70% o clorhexidina durante 15 segundos.
+B) Administrar profilaxis antibiótica sistemática de forma rutinaria.
+C) Cambiar el apósito transparente una vez por semana y el de gasa cada 2-3 días o si está sucio.
+D) Cambiar llaves, conectores de presión positiva y sistemas cada 4-7 días si están sucios o tras desconexiones accidentales.
+Respuesta correcta B
+
+143   Laura, la enfermera referente, al preparar la medicación, encuentra una ampolla de Noradrenalina en el casillero destinado a Metamizol. Ella notifica el incidente a través de NotificASP. Respecto a NotificASP, es correcto afirmar que:
+A) Es el sistema de notificación de incidentes y aprendizaje desarrollado por la Estrategia para la Seguridad del Paciente.
+B) Está diseñado para comunicar de forma voluntaria y anónima riesgos o incidentes en el entorno clínico.
+C) Es de uso exclusivo por profesionales que trabajan directamente con el paciente.
+D) Toda la información introducida es confidencial y está protegida.
+Respuesta correcta C
+
+144   Dentro de las buenas prácticas para el manejo seguro de medicamentos de alto riesgo, ¿cuál de las siguientes NO es una recomendación general?
+A) Estandarizar la preparación y administración.
+B) Implantar prácticas de doble chequeo en la preparación y administración.
+C) Almacenar soluciones concentradas de electrolitos en zonas de uso de enfermería.
+D) Validación farmacéutica y dispensación en dosis unitarias.
+Respuesta correcta C
+
+145   Cuando Jorge recibe el alta y regresa a su domicilio, según la cartera de servicios de Atención Primaria del SAS, es cierto que:
+A) Se realizará un contacto telefónico preferentemente antes de las 24 horas o, en su defecto, una visita domiciliaria antes de las 48 horas.
+B) El hospital emitirá los informes de alta e informes de continuidad de cuidados el día anterior al alta.
+C) El criterio de atención al alta hospitalaria no contempla la situación de fragilidad del paciente.
+D) Todas las anteriores son correctas.
+Respuesta correcta A
+
+146   Respecto al registro de la Voluntad Vital Anticipada, ¿cuál de las siguientes afirmaciones es INCORRECTA?
+A) La inscripción en el registro siempre es presencial para asegurar la capacidad y voluntariedad del solicitante.
+B) En caso de impedimento, el registrador se desplaza al domicilio del solicitante.
+C) Lo escrito se aplicará, salvo que se efectúe un nuevo registro formalizado en el Registro Nacional de Instrucciones Previas en el plazo de un mes.
+D) La Voluntad Vital Anticipada puede modificarse o cancelarse en cualquier momento, siguiendo los mismos pasos del registro.
+Respuesta correcta D
+
+147   Tras el alta, en consulta, Ana comenta que se plantea dejar de fumar en el próximo mes. Si valoramos su motivación mediante el test de Richmond y obtiene una puntuación de 8, se consideraría:
+A) Baja motivación.
+B) Motivación media.
+C) Alta motivación.
+D) Ninguna.
+Respuesta correcta A
+
+148   En la valoración de dependencia física a la nicotina, si Ana obtiene una puntuación de 2 en el Test de Fagerström, eso indicará:
+A) Baja dependencia.
+B) Dependencia media.
+C) Alta dependencia.
+D) La puntuación no es válida.
+Respuesta correcta D
+
+149   Según el Proceso Asistencial Integrado de Atención a las personas fumadoras (1ª edición, 2008), la enfermera deberá:
+A) Dar cita para intervención avanzada.
+B) Efectuar consejo sanitario.
+C) Entregar material de apoyo.
+D) Todas las respuestas son correctas.
+Respuesta correcta A
+
+150   Ana, preocupada por su peso, pregunta sobre el índice de masa corporal (IMC). ¿Cuál de las siguientes afirmaciones es INCORRECTA respecto al IMC?
+A) Se calcula dividiendo el peso en kg por el cuadrado de la talla en metros.
+B) Se utiliza para identificar sobrepeso y obesidad en adultos.
+C) Se considera obesidad si el IMC es igual o superior a 25.
+D) Se recomienda que se ofrezca intervención intensiva a adultos con IMC ≥ 30.
+Respuesta correcta D
+
+151   ¿Qué situaciones NO aborda el proceso Hepatitis Vírica de la cartera de servicios de atención primaria del SAS?
+A) Paciente con signos/síntomas clínicos compatibles con hepatitis aguda o crónica.
+B) Hallazgo casual o no de parámetros bioquímicos alterados y/o serología viral positiva.
+C) La población general en situación de riesgo.
+D) Pacientes afectados por Hepatitis delta y hepatitis E.
+Respuesta correcta D
+
+152   El diagnóstico de enfermería “Riesgo de deterioro de la integridad cutánea”, ¿a qué dominio pertenece?
+A) Dominio 2: Nutrición.
+B) Dominio 4: Actividad/Descanso.
+C) Dominio 6: Autopercepción.
+D) Dominio 11: Seguridad/Protección.
+Respuesta correcta D
+
+153   Según el artículo 4 de la Ley 44/2003, de 21 de noviembre, de Ordenación de las Profesiones Sanitarias, los profesionales sanitarios desarrollan, entre otras, funciones en el ámbito:
+A) De administración.
+B) De gestión clínica.
+C) Del trabajo en equipo.
+D) Ninguna de las respuestas es correcta.
+Respuesta correcta D
+
+
+    `; // Fin de fileContent
+
+    // --- FUNCIONES ---
+
+    /** Función para barajar un arreglo (algoritmo Fisher–Yates) */
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    /** Guarda el estado actual del examen en localStorage */
+    function saveProgress() {
+        const state = {
+            correctAnswersCount,
+            incorrectAnswersCount,
+            answeredQuestionsCount,
+            totalActiveQuestions,
+            activeQuestions: activeQuestions.map(q => ({
+                originalIndex: q.originalIndex,
+                answered: q.answered,
+                selectedAnswer: q.userAnswer, // Guardar la respuesta del usuario
+                isCorrect: q.isCorrect
+            }))
+        };
+        try {
+            localStorage.setItem(progressKey, JSON.stringify(state));
+        } catch (e) {
+            console.error("Error guardando progreso en localStorage:", e);
+        }
+    }
+
+    /** Carga el estado del examen desde localStorage */
+    function loadProgress() {
+        const savedState = localStorage.getItem(progressKey);
+        if (savedState) {
+            try {
+                return JSON.parse(savedState);
+            } catch (e) {
+                console.error("Error parseando progreso guardado:", e);
+                localStorage.removeItem(progressKey);
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /** Muestra la vista del examen y oculta la pantalla de inicio */
+    function showExamView() {
+        startScreen.classList.add('hidden');
+        examHeader.classList.remove('hidden');
+        contadorFijoDiv.classList.remove('hidden');
+        quizContainer.classList.remove('hidden');
+        document.body.classList.add('exam-active'); // Añade clase para padding-top
+    }
+
+    /** Muestra la pantalla de inicio y oculta la vista del examen */
+    function showStartScreen() {
+        startScreen.classList.remove('hidden');
+        examHeader.classList.add('hidden');
+        contadorFijoDiv.classList.add('hidden');
+        quizContainer.classList.add('hidden');
+        document.body.classList.remove('exam-active'); // Quita clase
+        document.body.style.justifyContent = 'center'; // Centra de nuevo
+    }
+
+
+    /** Renderiza una única pregunta, restaurando su estado si se está reanudando */
+    function renderSingleQuestion(q, index, totalQuestionsInSet, isResuming = false) {
+        const questionIndex = q.originalIndex;
+        const qDiv = document.createElement("div");
+        qDiv.className = "question";
+        qDiv.id = "q-" + questionIndex;
+
+        const p = document.createElement("p");
+        // Muestra el índice + 1 como número de pregunta en la vista actual
+        p.innerHTML = `<strong>${index + 1}. ${q.enunciado}</strong>`;
+        qDiv.appendChild(p);
+
+        const form = document.createElement("form");
+        form.className = "options";
+        form.dataset.questionId = questionIndex; // Usa el índice original como ID
+
+        const sortedLetters = Object.keys(q.options).sort();
+        sortedLetters.forEach(letter => {
+            const optionText = q.options[letter];
+            const label = document.createElement("label");
+            label.dataset.letter = letter;
+            const radioId = `q${questionIndex}_${letter}`; // ID único basado en índice original
+            label.htmlFor = radioId;
+
+            const radioInput = document.createElement("input");
+            radioInput.type = "radio";
+            radioInput.name = `q${questionIndex}`; // Name basado en índice original
+            radioInput.value = letter;
+            radioInput.id = radioId;
+
+            const isDisabled = isResuming && q.answered;
+            const isChecked = isResuming && q.userAnswer === letter;
+
+            radioInput.disabled = isDisabled;
+            radioInput.checked = isChecked;
+
+            label.appendChild(radioInput);
+            label.appendChild(document.createTextNode(` (${letter}) ${optionText}`));
+
+            if (isDisabled) {
+                label.classList.add('disabled');
+                if (isChecked) {
+                    if (q.isCorrect) {
+                        label.classList.add('respuesta-correcta');
+                    } else {
+                        label.classList.add('respuesta-incorrecta');
+                    }
+                }
+                if (!q.isCorrect && letter === q.correctAnswer) {
+                    label.classList.add('es-correcta-destacada');
+                }
+            } else {
+                radioInput.addEventListener("change", () => handleOptionChange(q, letter, form));
+            }
+
+            form.appendChild(label);
+        });
+        qDiv.appendChild(form);
+
+        // Div para el feedback (Correcto/Incorrecto)
+        const feedbackDiv = document.createElement("div");
+        feedbackDiv.className = "feedback";
+        feedbackDiv.id = "feedback-" + questionIndex;
+         if (isResuming && q.answered) {
+             if (q.isCorrect) {
+                 feedbackDiv.innerHTML = "✅ Correcto";
+                 feedbackDiv.classList.add("correct");
+            } else {
+                 feedbackDiv.innerHTML = `❌ Incorrecto. La respuesta correcta es ${q.correctAnswer}`;
+                 feedbackDiv.classList.add("incorrect");
+            }
+            feedbackDiv.style.display = 'block';
+        }
+        qDiv.appendChild(feedbackDiv);
+
+        // Div para la explicación
+        const explanationDiv = document.createElement("div");
+        explanationDiv.className = "explanation-text";
+        explanationDiv.id = "explanation-" + questionIndex;
+        // Si se está reanudando y la pregunta ya fue respondida, muestra la explicación
+        if (isResuming && q.answered) {
+            explanationDiv.innerHTML = q.explanation || "Explicación no disponible."; // Muestra explicación guardada o mensaje por defecto
+            explanationDiv.style.display = 'block';
+        }
+        qDiv.appendChild(explanationDiv);
+
+        // Añade línea separadora si no es la última pregunta del set
+        if (index < totalQuestionsInSet - 1) {
+            const hr = document.createElement("hr");
+            qDiv.appendChild(hr);
+        }
+
+        examDiv.appendChild(qDiv);
+    }
+
+     /** Renderiza las preguntas activas en el contenedor del examen */
+     function renderActiveQuestions(isResuming = false) {
+        examDiv.innerHTML = ''; // Limpia el contenedor
+        const totalInSet = activeQuestions.length; // Total de preguntas en esta sesión
+        activeQuestions.forEach((q, index) => {
+            // Pasa el total de preguntas del set actual a la función de renderizado
+            renderSingleQuestion(q, index, totalInSet, isResuming);
+        });
+     }
+
+
+    /** Actualiza los contadores en la barra fija */
+    function actualizarContadorFijo() {
+        contadorAciertosSpan.textContent = correctAnswersCount;
+        contadorFallosSpan.textContent = incorrectAnswersCount;
+        contadorRespondidasSpan.textContent = answeredQuestionsCount;
+        contadorTotalActivoSpan.textContent = totalActiveQuestions; // Mostrar total activo
+        const pending = totalActiveQuestions - answeredQuestionsCount;
+        contadorPendientesSpan.textContent = pending;
+
+        if (pendingLink) {
+            pendingLink.classList.toggle('disabled', pending === 0);
+        }
+    }
+
+    /** Maneja la selección de una respuesta */
+    function handleOptionChange(questionData, selectedAnswer, form) {
+        if (!questionData || questionData.answered) return; // Evita procesar si ya está respondida
+
+        const questionIndex = questionData.originalIndex; // Usa el índice original
+        const questionDiv = document.getElementById(`q-${questionIndex}`);
+        if (!questionDiv) return; // Seguridad
+
+        const feedbackDiv = questionDiv.querySelector(".feedback");
+        const explanationDiv = questionDiv.querySelector(".explanation-text"); // Obtener div de explicación
+        const labels = form.querySelectorAll('label');
+        const correctAnswer = questionData.correctAnswer;
+
+        // Marca la pregunta como respondida y actualiza contadores
+        questionData.answered = true;
+        questionData.userAnswer = selectedAnswer; // Guarda respuesta seleccionada
+        answeredQuestionsCount++;
+        userSelections[questionIndex] = selectedAnswer; // Para modo revisión
+
+        const selectedLabel = form.querySelector(`label[data-letter="${selectedAnswer}"]`);
+        const correctLabel = form.querySelector(`label[data-letter="${correctAnswer}"]`);
+
+        feedbackDiv.className = "feedback"; // Resetea clases de feedback
+
+        // Evalúa la respuesta y actualiza contadores y estilos
+        if (selectedAnswer === correctAnswer) {
+            questionData.isCorrect = true;
+            feedbackDiv.innerHTML = "✅ Correcto";
+            feedbackDiv.classList.add("correct");
+            if(selectedLabel) selectedLabel.classList.add('respuesta-correcta');
+            correctAnswersCount++;
+        } else {
+            questionData.isCorrect = false;
+            feedbackDiv.innerHTML = `❌ Incorrecto. La respuesta correcta es ${correctAnswer}`;
+            feedbackDiv.classList.add("incorrect");
+            if(selectedLabel) selectedLabel.classList.add('respuesta-incorrecta');
+            incorrectAnswersCount++;
+        }
+        feedbackDiv.style.display = 'block'; // Muestra el feedback
+
+        // Muestra la explicación
+        if (explanationDiv) {
+            explanationDiv.innerHTML = questionData.explanation || "Explicación no disponible."; // Usa la explicación guardada o un texto por defecto
+            explanationDiv.style.display = 'block'; // Hace visible la explicación
+        }
+
+        // Destaca la respuesta correcta siempre
+        if (correctLabel) {
+            correctLabel.classList.add('es-correcta-destacada');
+        }
+
+        // Deshabilita todas las opciones de esta pregunta
+        labels.forEach(label => {
+            const input = label.querySelector('input[type="radio"]');
+            if (input) input.disabled = true;
+            label.classList.add('disabled');
+        });
+
+        actualizarContadorFijo(); // Actualiza la barra de estado
+        saveProgress(); // Guarda el progreso actual
+
+        // Comprueba si se han respondido todas las preguntas
+        if (answeredQuestionsCount === totalActiveQuestions) {
+            setTimeout(mostrarResultadosFinales, 500); // Muestra resultados tras un breve delay
+            localStorage.removeItem(progressKey); // Limpia progreso al finalizar
+        }
+    }
+
+
+    /** Muestra el modal de resultados */
+    function mostrarResultadosFinales() {
+        const percentage = totalActiveQuestions > 0 ? ((correctAnswersCount / totalActiveQuestions) * 100).toFixed(1) : 0;
+        resultsText.innerHTML = `Aciertos: <strong style="color: green;">${correctAnswersCount}</strong><br>Fallos: <strong style="color: red;">${incorrectAnswersCount}</strong><br>Total: ${totalActiveQuestions}<br>Porcentaje: <strong>${percentage}%</strong>`;
+        resultsModal.style.display = 'flex'; // Usa flex para centrar contenido
+        resultsModal.style.justifyContent = 'center';
+        resultsModal.style.alignItems = 'center';
+    }
+
+     /** Oculta el modal de resultados */
+    function hideResultsModal() {
+        resultsModal.style.display = 'none';
+    }
+
+    /** Reinicia el test (recarga la página) */
+    function reiniciarQuiz() {
+        localStorage.removeItem(progressKey); // Limpia el progreso guardado
+        window.location.reload(); // Recarga la página para empezar de cero
+    }
+
+     /** Configura el modo revisión */
+     function mostrarRevision() {
+        hideResultsModal(); // Oculta el modal de resultados
+        quizContainer.classList.add('modo-revision'); // Añade clase para estilos de revisión
+
+        activeQuestions.forEach(q => { // Itera sobre las preguntas activas de esta sesión
+            const questionIndex = q.originalIndex; // Usa el índice original
+            const questionDiv = document.getElementById(`q-${questionIndex}`);
+            if (!questionDiv) return; // Si no existe el div, salta
+
+            const form = questionDiv.querySelector("form");
+            const labels = form.querySelectorAll('label');
+
+            labels.forEach(label => {
+                 const letter = label.dataset.letter; // Obtiene la letra de la opción
+                 const input = label.querySelector('input[type="radio"]');
+                 if(input) input.style.display = 'none'; // Oculta el radio button
+
+                 // Limpia clases previas y añade 'disabled'
+                 label.classList.remove('respuesta-correcta', 'respuesta-incorrecta', 'respuesta-seleccionada', 'es-correcta-revision', 'es-correcta-destacada', 'disabled');
+                 label.classList.add('disabled'); // Mantiene el aspecto deshabilitado
+
+                 // Marca la respuesta correcta con un borde especial
+                 if (letter === q.correctAnswer) {
+                    label.classList.add('es-correcta-revision');
+                 }
+
+                 // Marca la respuesta que seleccionó el usuario
+                 if (userSelections.hasOwnProperty(questionIndex) && letter === userSelections[questionIndex]) {
+                     label.classList.add('respuesta-seleccionada'); // Añade indicador visual (ej. un icono)
+                     // Añade color verde o rojo según si acertó o falló
+                     if (userSelections[questionIndex] === q.correctAnswer) {
+                         label.classList.add('respuesta-correcta');
+                     } else {
+                         label.classList.add('respuesta-incorrecta');
+                     }
+                 }
+            });
+        });
+         // Desplaza la vista al inicio del contenedor de preguntas
+         quizContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+     }
+
+    /** Encuentra y se desplaza a la siguiente pregunta pendiente */
+    function findAndScrollToNextPending(event) {
+        event.preventDefault(); // Evita el comportamiento por defecto del enlace
+        // Busca la primera pregunta en el set activo que no esté respondida
+        const nextPendingQuestion = activeQuestions.find(q => !q.answered);
+        if (nextPendingQuestion) {
+            const element = document.getElementById('q-' + nextPendingQuestion.originalIndex);
+            if (element) {
+                // Desplaza suavemente el elemento al centro de la vista
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Añade un borde temporal para destacar la pregunta
+                element.style.outline = '3px solid var(--accent-color)';
+                setTimeout(() => { element.style.outline = '0px solid transparent'; }, 1500); // Quita el borde después de 1.5s
+            }
+        }
+    }
+
+     /** Inicia un nuevo examen */
+     function startExam() {
+        // Obtiene el número de preguntas seleccionado
+        const selectedValue = document.querySelector('input[name="numQuestions"]:checked').value;
+        let numQuestionsToSelect;
+
+        if (selectedValue === 'all') {
+            numQuestionsToSelect = allParsedQuestions.length; // Todas las parseadas
+        } else {
+            numQuestionsToSelect = parseInt(selectedValue, 10); // Número específico
+        }
+        // Asegura que no se pidan más preguntas de las disponibles
+        numQuestionsToSelect = Math.min(numQuestionsToSelect, allParsedQuestions.length);
+
+        // Selecciona el subconjunto de preguntas (ya barajadas previamente)
+        activeQuestions = allParsedQuestions.slice(0, numQuestionsToSelect);
+        totalActiveQuestions = activeQuestions.length; // Guarda el total para esta sesión
+
+        // Reinicia contadores y estado
+        correctAnswersCount = 0;
+        incorrectAnswersCount = 0;
+        answeredQuestionsCount = 0;
+        userSelections = {}; // Limpia selecciones previas
+        localStorage.removeItem(progressKey); // Elimina cualquier progreso guardado
+
+        // Resetea el estado de cada pregunta activa
+        activeQuestions.forEach(q => {
+            q.answered = false;
+            q.userAnswer = null;
+            q.isCorrect = null;
+        });
+
+        renderActiveQuestions(false); // Renderiza las preguntas (sin estado de reanudación)
+        actualizarContadorFijo(); // Pone los contadores a cero
+        showExamView(); // Muestra la interfaz del examen
+        saveProgress(); // Guarda el estado inicial (0 respondidas)
+     }
+
+     /** Reanuda un examen guardado */
+     function resumeExam() {
+         const savedState = loadProgress(); // Carga el estado guardado
+         if (!savedState) {
+             alert("No se encontró progreso guardado o está corrupto.");
+             localStorage.removeItem(progressKey); // Limpia si hay error
+             showStartScreen(); // Vuelve a la pantalla de inicio
+             return;
+         }
+
+         // Restaura contadores
+         correctAnswersCount = savedState.correctAnswersCount;
+         incorrectAnswersCount = savedState.incorrectAnswersCount;
+         answeredQuestionsCount = savedState.answeredQuestionsCount;
+         totalActiveQuestions = savedState.totalActiveQuestions;
+
+         // Crea un mapa para buscar fácilmente el estado guardado de cada pregunta por su índice original
+         const savedQuestionsMap = new Map(savedState.activeQuestions.map(q => [q.originalIndex, q]));
+
+         // Filtra las preguntas parseadas para incluir solo las que estaban en la sesión guardada
+         // y restaura su estado (respondida, respuesta, si fue correcta)
+         activeQuestions = allParsedQuestions
+             .filter(q => savedQuestionsMap.has(q.originalIndex))
+             .map(q => {
+                 const savedQ = savedQuestionsMap.get(q.originalIndex);
+                 return { ...q, // Mantiene la info parseada (enunciado, opciones, correcta, explicación)
+                          answered: savedQ.answered,
+                          userAnswer: savedQ.selectedAnswer, // Restaura la respuesta del usuario
+                          isCorrect: savedQ.isCorrect }; // Restaura si fue correcta o no
+             });
+
+         // Reconstruye el objeto userSelections para el modo revisión
+         userSelections = {};
+         activeQuestions.forEach(q => {
+             if(q.answered && q.userAnswer !== null) {
+                 userSelections[q.originalIndex] = q.userAnswer;
+             }
+         });
+
+         // Comprobación de seguridad: si el número de preguntas no coincide, algo fue mal
+         if(activeQuestions.length !== totalActiveQuestions) {
+             console.error("Discrepancia en el número de preguntas al reanudar. Reiniciando.");
+             localStorage.removeItem(progressKey);
+             location.reload(); // Recarga para evitar estado inconsistente
+             return;
+         }
+
+         renderActiveQuestions(true); // Renderiza las preguntas, marcando las ya respondidas y mostrando explicación si aplica
+         actualizarContadorFijo(); // Actualiza los contadores con los valores cargados
+         showExamView(); // Muestra la interfaz del examen
+     }
+
+
+    // --- Inicialización de la Aplicación ---
+    function initializeApp() {
+        parseUserExplanations(); // *** NUEVO: Parsea las explicaciones del usuario primero ***
+        parseQuestions(); // Parsea las preguntas del texto y asigna explicaciones
+        shuffle(allParsedQuestions); // Baraja todas las preguntas parseadas una vez
+        totalParsedCountSpan.textContent = allParsedQuestions.length; // Muestra el total disponible
+
+        const savedProgress = loadProgress(); // Intenta cargar progreso previo
+
+        // Si hay progreso guardado válido, muestra opción de reanudar
+        if (savedProgress && savedProgress.activeQuestions && savedProgress.activeQuestions.length > 0) {
+            resumePrompt.classList.remove('hidden');
+            resumeButton.classList.remove('hidden');
+            resumeButton.onclick = resumeExam; // Asigna función al botón de reanudar
+        } else {
+            // Si no hay progreso o está inválido, oculta opción de reanudar
+            resumePrompt.classList.add('hidden');
+            resumeButton.classList.add('hidden');
+             if (savedProgress) { // Si había algo pero era inválido, lo limpia
+                localStorage.removeItem(progressKey);
+            }
+        }
+
+        // Asigna función al botón de empezar nuevo examen
+        startButton.onclick = startExam;
+
+        // Asigna funciones a los botones del modal de resultados
+        reiniciarBtn.addEventListener('click', reiniciarQuiz);
+        revisarBtn.addEventListener('click', mostrarRevision);
+        // Asigna función al enlace de preguntas pendientes
+        if (pendingLink) {
+            pendingLink.addEventListener('click', findAndScrollToNextPending);
+        }
+
+        // Muestra la pantalla de inicio por defecto
+        showStartScreen();
+    }
+
+    // *** NUEVO: Función para parsear las explicaciones del usuario ***
+    function parseUserExplanations() {
+        explanationsMap = new Map(); // Reinicia el mapa
+        const lines = userExplanationsText.trim().split('\n');
+        const explanationRegex = /^\s*(\d+):\s*([\s\S]*)/; // Captura número y el resto como HTML
+
+        lines.forEach(line => {
+            const match = line.trim().match(explanationRegex);
+            if (match) {
+                const questionNumber = parseInt(match[1], 10);
+                const explanationHtml = match[2].trim();
+                if (!isNaN(questionNumber) && explanationHtml) {
+                    explanationsMap.set(questionNumber, explanationHtml);
+                } else {
+                    console.warn(`Formato de explicación inválido ignorado: "${line.trim()}"`);
+                }
+            }
+        });
+        console.log(`Parseo de explicaciones finalizado. Total de explicaciones cargadas: ${explanationsMap.size}`);
+    }
+
+    /** Parsea el contenido del examen */
+    function parseQuestions() {
+        allParsedQuestions = [];
+        // Regex mejorada para ser más flexible con espacios y saltos de línea
+        const questionRegex = /^\s*(\d+)\s+([\s\S]*?)\n\s*([A-D]\)\s+[\s\S]*?)\nRespuesta correcta\s*([A-D])\s*$/gm;
+        let match;
+        let lastIndex = 0; // Para depuración de bucles infinitos
+
+        while ((match = questionRegex.exec(fileContent)) !== null) {
+             // Seguridad anti-bucle infinito
+             if (match.index === questionRegex.lastIndex) {
+                 questionRegex.lastIndex++;
+             }
+             if(questionRegex.lastIndex <= lastIndex) {
+                 console.warn("Regex no avanza, posible bucle infinito en pregunta cerca de índice:", lastIndex);
+                 break; // Salir si no avanza
+             }
+             lastIndex = questionRegex.lastIndex;
+
+            const questionNumber = parseInt(match[1], 10);
+            let enunciado = match[2].trim().replace(/:$/, '').trim();
+            const optionsBlock = match[3].trim();
+            const correctAnswer = match[4].trim().toUpperCase();
+
+            // *** MODIFICADO: Buscar explicación en el mapa ***
+            const explanation = explanationsMap.get(questionNumber) || "Explicación no disponible."; // Usa la explicación del mapa o la por defecto
+
+            const options = {};
+            const optionLines = optionsBlock.split('\n');
+            let optionCount = 0;
+            optionLines.forEach(line => {
+                 const optionMatch = line.trim().match(/^([A-D])\)\s*(.*)/i);
+                 if (optionMatch) {
+                    options[optionMatch[1].toUpperCase()] = optionMatch[2].trim();
+                    optionCount++;
+                 }
+            });
+
+            // Validación básica
+            if (enunciado && optionCount >= 2 && correctAnswer && /^[A-D]$/.test(correctAnswer)) {
+                 allParsedQuestions.push({
+                    originalIndex: questionNumber,
+                    enunciado: enunciado,
+                    options: options,
+                    correctAnswer: correctAnswer,
+                    explanation: explanation, // *** Asigna la explicación encontrada o por defecto ***
+                    answered: false,
+                    userAnswer: null,
+                    isCorrect: null
+                 });
+            } else {
+                 console.warn(`Pregunta ${questionNumber} ignorada: formato inválido. Enunciado: "${enunciado}", Opciones: ${optionCount}, Correcta: "${correctAnswer}"`);
+            }
+        }
+        console.log(`Parseo finalizado. Total de preguntas parseadas con éxito: ${allParsedQuestions.length}`);
+         if (allParsedQuestions.length === 0) {
+             console.error("Error Crítico: No se parseó ninguna pregunta. Verifica el formato del texto en 'fileContent'.");
+             examDiv.innerHTML = "<p style='color: red; font-weight: bold;'>Error: No se pudieron cargar las preguntas. Revisa el formato del archivo original.</p>";
+         }
+    }
+
+
+    // --- Ejecutar Inicialización al cargar el DOM ---
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+  </script>
+</body>
+</html>
