@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Examen Enfermeria</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- Variables CSS (Paleta de colores y estilos base) --- */
+    :root {
+      /* Paleta de colores actualizada - Alegre y Profesional */
+      --header-bg: #3b82f6; /* Azul vibrante pero profesional */
+      --header-text: #ffffff;
+      --card-border: #10b981; /* Verde esmeralda como acento */
+      --card-border-hover: #059669; /* Verde más oscuro */
+      --button-bg: #3b82f6; /* Azul consistente */
+      --button-hover-bg: #2563eb; /* Azul más oscuro */
+      --icon-color: #10b981; /* Verde esmeralda para iconos */
+      --body-bg-start: #e0f2fe; /* Azul cielo claro */
+      --body-bg-end: #d1fae5;   /* Verde menta claro */
+      --text-color: #1f2937; /* Gris oscuro (ligeramente más oscuro) */
+      --card-bg: #ffffff;
+      --card-shadow: rgba(0,0,0,0.08);
+      --card-shadow-hover: rgba(0,0,0,0.15);
+      --mensaje-color: #1e40af; /* Azul oscuro para el mensaje */
+      --image-border-color: #ddd; /* Color para el borde sutil de la imagen */
+    }
+
+    /* --- Estilos Generales --- */
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      /* Gradiente de fondo */
+      background: linear-gradient(135deg, var(--body-bg-start), var(--body-bg-end));
+      color: var(--text-color);
+      text-align: center;
+      min-height: 100vh; /* Asegura que el gradiente cubra toda la altura */
+      padding-bottom: 80px; /* Espacio para el botón fijo si aparece */
+      box-sizing: border-box;
+    }
+
+    /* --- Header --- */
+    header {
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      padding: 25px 20px;
+      font-size: 26px;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      border-bottom: 4px solid rgba(0,0,0,0.1);
+    }
+
+    /* --- Imagen del Header --- */
+    .header-image {
+      width: 100%;             /* Ocupa el ancho disponible */
+      max-width: 750px;        /* Límite de ancho */
+      height: 300px;           /* Altura fija para escritorio */
+      /* Cambiado a 'contain' para mostrar la imagen completa */
+      object-fit: contain;     /* Muestra la imagen completa, puede añadir espacio vacío */
+      object-position: center; /* Centra la imagen */
+      margin: 30px auto 25px auto; /* Margen */
+      display: block;
+      border-radius: 8px;
+      border: 1px solid var(--image-border-color); /* Borde sutil */
+    }
+
+    /* --- Mensaje Principal --- */
+    .mensaje {
+      margin-top: 20px;
+      margin-bottom: 30px; /* Añadido margen inferior */
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--mensaje-color);
+      padding: 0 15px;
+    }
+
+    /* --- Contenedor para el botón de acceso --- */
+    #acceso-examen-container {
+      display: flex; /* Usar flex para centrar */
+      justify-content: center; /* Centrar horizontalmente */
+      padding: 20px 20px 40px 20px; /* Padding alrededor */
+    }
+
+    /* --- Botón/Tarjeta de Acceso (reutiliza estilo .tarjeta) --- */
+    .tarjeta { /* Estilo base para tarjetas/botones similares */
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px var(--card-shadow);
+      padding: 25px;
+      width: 260px;
+      min-height: 160px; /* Altura mínima */
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-top-color 0.3s ease;
+      cursor: pointer;
+      border-top: 6px solid var(--card-border); /* Borde superior coloreado */
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* Centra contenido verticalmente */
+      align-items: center; /* Centra contenido horizontalmente */
+      text-decoration: none;
+      color: inherit; /* Hereda color de texto */
+      box-sizing: border-box;
+    }
+
+    .tarjeta:hover, .tarjeta:focus {
+      transform: translateY(-6px) scale(1.02); /* Efecto de elevación y escala */
+      box-shadow: 0 8px 20px var(--card-shadow-hover);
+      border-top-color: var(--card-border-hover); /* Cambia color del borde */
+      outline: 2px solid var(--card-border); /* Outline al hacer foco */
+      outline-offset: 2px;
+    }
+    /* Quitar outline si el foco no es visible (ej. click de ratón) */
+    .tarjeta:focus:not(:focus-visible) {
+       outline: none;
+    }
+
+    /* Icono dentro de la tarjeta */
+    .tarjeta .material-symbols-outlined {
+       font-size: 44px;
+       color: var(--icon-color);
+       margin-bottom: 15px;
+    }
+
+    /* Título dentro de la tarjeta */
+    .tarjeta h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    /* --- Iframe Visor --- */
+    iframe#visor { /* Más específico para evitar conflictos */
+      width: 100%;
+      height: 100vh; /* Ocupa toda la altura de la ventana */
+      border: none;
+      display: none; /* Oculto por defecto */
+      position: fixed; /* Fijo en la pantalla */
+      top: 0;
+      left: 0;
+      z-index: 999; /* Por encima de otros elementos */
+      background-color: white; /* Fondo blanco por si tarda en cargar */
+    }
+
+    /* --- Botón Volver al Menú --- */
+    #boton-menu {
+      position: fixed; /* Fijo en la pantalla */
+      bottom: 25px;
+      right: 25px;
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 50px; /* Botón redondeado */
+      padding: 12px 20px 12px 16px; /* Padding asimétrico para icono */
+      font-size: 16px;
+      font-weight: 600; /* Añadido para consistencia */
+      cursor: pointer;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      z-index: 1000; /* Por encima del iframe */
+      transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+      display: none; /* Oculto por defecto */
+      align-items: center; /* Alinea icono y texto */
+      gap: 8px; /* Espacio entre icono y texto */
+    }
+
+    #boton-menu:hover {
+      background-color: var(--button-hover-bg);
+      transform: scale(1.05); /* Efecto de escala al pasar el ratón */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    /* Icono dentro del botón de menú */
+    #boton-menu .material-symbols-outlined {
+      font-size: 24px; /* Tamaño del icono */
+      line-height: 1; /* Asegura alineación */
+    }
+
+    /* --- Estilos Responsivos --- */
+    @media (max-width: 768px) { /* Tablets y pantallas medianas */
+       header {
+           padding: 20px 15px;
+           font-size: 24px;
+       }
+       .header-image {
+           max-width: 95%;
+           height: 250px;
+           /* Añadido object-fit: contain también aquí */
+           object-fit: contain;
+           margin: 25px auto 20px auto;
+       }
+       .mensaje {
+           font-size: 28px;
+       }
+       #acceso-examen-container {
+           padding: 15px 15px 30px 15px;
+       }
+       .tarjeta {
+           width: 240px;
+           padding: 20px;
+           min-height: 150px;
+       }
+       .tarjeta h3 {
+           font-size: 17px;
+       }
+    }
+
+    @media (max-width: 600px) { /* Móviles */
+      body {
+         padding-top: 0;
+         padding-bottom: 70px;
+      }
+      header {
+         font-size: 22px;
+         padding: 20px 15px;
+      }
+      .header-image {
+         margin-top: 20px;
+         margin-bottom: 20px;
+         border-radius: 6px;
+         max-width: 92%;       /* Limita el ancho */
+         height: auto;         /* Altura automática según proporción */
+         /* Eliminados aspect-ratio y object-fit para tamaño natural */
+         display: block;       /* Asegura que sea bloque */
+         margin-left: auto;    /* Centrado horizontal */
+         margin-right: auto;
+         border: 1px solid var(--image-border-color); /* Mantiene el borde */
+      }
+      .mensaje {
+        font-size: 26px;
+        margin-bottom: 25px;
+      }
+       #acceso-examen-container {
+           padding: 10px 15px 20px 15px;
+       }
+      .tarjeta {
+        width: 90%;
+        max-width: 320px;
+        padding: 20px;
+        min-height: 130px;
+      }
+      .tarjeta .material-symbols-outlined {
+         font-size: 36px;
+         margin-bottom: 10px;
+      }
+      .tarjeta h3 {
+         font-size: 17px;
+      }
+      #boton-menu {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px 10px 14px;
+        font-size: 14px;
+      }
+      #boton-menu .material-symbols-outlined {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    Examen Enfermeria
+  </header>
+
+  <img src="enfermeras-1024x1024.jpg" alt="Ilustración de enfermeras" class="header-image"
+       onerror="this.alt='Error al cargar imagen.'; this.style.display='none'; console.error('Error loading image: enfermeras-1024x1024.jpg');">
+
+  <div class="mensaje">¡A por la OPE!</div>
+
+  <div id="acceso-examen-container" class="flex justify-center py-10">
+      <div id="boton-acceder-examen" class="tarjeta" role="button" tabindex="0"
+           aria-label="Acceder al Examen Enfermeria 2023"
+           onclick="cargar('ENFERMERIA 2023.html', 'Examen Enfermeria 2023')">
+          <span class="material-symbols-outlined">assignment</span>
+          <h3>Acceder a Examen</h3>
+      </div>
+  </div>
+
+  <button id="boton-menu" onclick="volverAlMenu()">
+    <span class="material-symbols-outlined">home</span>
+    Volver al menú
+  </button>
+
+  <iframe id="visor" title="Visor de Exámenes"></iframe>
+
+  <script>
+    // --- Elementos del DOM ---
+    const visorIframe = document.getElementById('visor');
+    const accesoExamenContainer = document.getElementById('acceso-examen-container');
+    const mensajePrincipal = document.querySelector('.mensaje');
+    const botonMenu = document.getElementById('boton-menu');
+    const header = document.querySelector('header');
+    const headerImage = document.querySelector('.header-image');
+
+    // --- Funciones ---
+
+    /**
+     * Carga un archivo HTML de examen en el iframe y ajusta la visibilidad de los elementos.
+     * @param {string} nombreArchivo - El nombre del archivo HTML del examen a cargar.
+     * @param {string} tituloExamen - El título del examen.
+     */
+    function cargar(nombreArchivo, tituloExamen) {
+       if (!visorIframe || !accesoExamenContainer || !mensajePrincipal || !header || !headerImage || !botonMenu) {
+          console.error("Error: Faltan elementos del DOM necesarios para cargar el examen.");
+          return;
+       }
+      console.log(`Cargando examen: ${tituloExamen} (${nombreArchivo})`);
+      visorIframe.src = nombreArchivo;
+      visorIframe.style.display = 'block';
+      accesoExamenContainer.style.display = 'none';
+      mensajePrincipal.style.display = 'none';
+      header.style.display = 'none';
+      headerImage.style.display = 'none';
+      botonMenu.style.display = 'flex';
+      // visorIframe.focus();
+    }
+
+    /**
+     * Oculta el iframe y muestra de nuevo los elementos del menú principal.
+     */
+    function volverAlMenu() {
+       if (!visorIframe || !accesoExamenContainer || !mensajePrincipal || !header || !headerImage || !botonMenu) {
+          console.error("Error: Faltan elementos del DOM necesarios para volver al menú.");
+          return;
+       }
+      console.log("Volviendo al menú principal.");
+      visorIframe.style.display = 'none';
+      visorIframe.src = '';
+      accesoExamenContainer.style.display = 'flex';
+      mensajePrincipal.style.display = 'block';
+      header.style.display = 'block';
+      headerImage.style.display = 'block';
+      botonMenu.style.display = 'none';
+      // const botonAcceso = document.getElementById('boton-acceder-examen');
+      // if (botonAcceso) {
+      //   botonAcceso.focus();
+      // }
+    }
+
+    // --- Inicialización ---
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOM cargado. Menú de acceso único listo.");
+        if(visorIframe) visorIframe.style.display = 'none';
+        if(botonMenu) botonMenu.style.display = 'none';
+        if(accesoExamenContainer) accesoExamenContainer.style.display = 'flex';
+    });
+
+  </script>
+
+</body>
+</html>
